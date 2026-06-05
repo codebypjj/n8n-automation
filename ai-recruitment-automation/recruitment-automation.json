@@ -1,0 +1,1195 @@
+{
+  "name": "Automated Recuitment Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "485b6e69-5906-4733-a20a-2a5c34f30f08",
+              "name": "resumedriveUrl",
+              "value": "={{ $json.webViewLink }}",
+              "type": "string"
+            },
+            {
+              "id": "8144ddd4-ec1f-4f08-b3ee-733d7385dadc",
+              "name": "resumeFileId",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "e5bc0949-65a7-4654-9c6f-a6fdb6e74318",
+              "name": "resumeFileName",
+              "value": "={{ $json.name }}",
+              "type": "string"
+            },
+            {
+              "id": "23645080-2c34-4550-91a1-a071d3b516df",
+              "name": "candidateEmail",
+              "value": "={{ $('Application Form/Resume Upload').item.json.Email }}",
+              "type": "string"
+            },
+            {
+              "id": "60c0fc29-6852-4ffb-a90b-36830389cb90",
+              "name": "recordId",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        112,
+        -448
+      ],
+      "id": "44b07a65-a48d-4323-8172-7207db4fc553",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "content": "## Resume Submission and Checking",
+        "height": 496,
+        "width": 640,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        -512
+      ],
+      "id": "0877a479-eeaf-45ce-9c6e-9c8596cca41f",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        608,
+        -256
+      ],
+      "id": "149bb8c7-fe0c-4e44-bdfd-c89e3dfcdd2f",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "formTitle": "Apply for a Position",
+        "formDescription": "Please fill up this form. We'll get back to you ASAP! ",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Fullname",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Email",
+              "fieldType": "email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Phone",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Position",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Senior Engineer"
+                  },
+                  {
+                    "option": "Power BI Specialist"
+                  },
+                  {
+                    "option": "Data Analyst"
+                  },
+                  {
+                    "option": "Software Engineer"
+                  },
+                  {
+                    "option": "Web Designer"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Resume",
+              "fieldType": "file",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        -96,
+        -272
+      ],
+      "id": "c1b0f36a-dc8a-44dd-a320-2ef00799a001",
+      "name": "Application Form/Resume Upload",
+      "webhookId": "YOU_WEBHOOK_ID"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.airtable.com/v0/YOUR_AIRTABLE_BASE_ID/YOUR_AIRTABLE_TABLE_ID?filterByFormula=({Gmail}=\"{{ $('Application Form/Resume Upload').item.json.Email }}\")",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer YOUR_AIRTABLE_PERSONAL_ACCESS_TOKEN"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        112,
+        -192
+      ],
+      "id": "cd619120-ff35-4166-bbae-aba55f124a22",
+      "name": "Check Duplicate Application"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.records[0].fields.Gmail }}",
+        "subject": "Application Update",
+        "emailType": "text",
+        "message": "=Thank you for your interest in joining our team. \n\nOur records indicate that you have previously submitted an application on {{ $('Check Duplicate Application').item.json.records[0].fields['Application Date'] }} for {{ $('Check Duplicate Application').item.json.records[0].fields.Position }}. To ensure a fair and consistent review process, we are unable to consider duplicate applications for the same position at this time. \n\nWe appreciate your interest and encourage you to apply for future opportunities that match your skills and experience. \n\nThank you for your understanding. \n\nBest regards, \nHiring Team",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        336,
+        -448
+      ],
+      "id": "b4779d8f-a518-47fa-9df4-46f95dcf2ce7",
+      "name": "Rejection/Existing Application",
+      "webhookId": "YOUR_WEBHOOK_ID",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_GMAIL_CREDENTIAL_ID",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "Resume",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        608,
+        -448
+      ],
+      "id": "6e0ab1ef-352b-4a95-94db-58db1ff8ffb1",
+      "name": "Extract Resume"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c22b2c38-906b-432c-b946-d74c699da4eb",
+              "name": "resumeText",
+              "value": "={{ $('Extract Resume').item.json.text.replace(/\\n{3,}/g, '\\n\\n').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "c9e907a9-25e7-42f2-9e28-45ea940b3f61",
+              "name": "candidateName",
+              "value": "={{ $('Application Form/Resume Upload').item.json.Fullname }}",
+              "type": "string"
+            },
+            {
+              "id": "34fa2f60-0d29-4999-9221-bb6acc6cf5a4",
+              "name": "candidateEmail",
+              "value": "={{ $('Application Form/Resume Upload').item.json.Email }}",
+              "type": "string"
+            },
+            {
+              "id": "dd184ddf-3079-4057-877f-dc56c5de875d",
+              "name": "candidateDriveUrl",
+              "value": "={{ $('Edit Fields').item.json.resumedriveUrl }}",
+              "type": "string"
+            },
+            {
+              "id": "cabc7138-bcfe-41ab-9521-5539783dad29",
+              "name": "submissionDate",
+              "value": "={{ $('Application Form/Resume Upload').item.json.submittedAt }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        816,
+        -256
+      ],
+      "id": "1eb07a21-e02c-4d17-b89f-a11fc06a8500",
+      "name": "Clean & Structure Data"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "YOUR_AIRTABLE_BASE_ID",
+          "mode": "list",
+          "cachedResultName": "AI Automation Tracker",
+          "cachedResultUrl": "https://airtable.com/YOUR_AIRTABLE_BASE_ID"
+        },
+        "table": {
+          "__rl": true,
+          "value": "YOUR_AIRTABLE_TABLE_ID",
+          "mode": "list",
+          "cachedResultName": "Employees",
+          "cachedResultUrl": "https://airtable.com/YOUR_AIRTABLE_BASE_ID/YOUR_AIRTABLE_TABLE_ID"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Fullname": "={{ $('Application Form/Resume Upload').item.json.Fullname }}",
+            "Gmail": "={{ $('Application Form/Resume Upload').item.json.Email }}",
+            "Phone": "={{ $('Application Form/Resume Upload').item.json.Phone }}",
+            "Position": "={{ $('Application Form/Resume Upload').item.json.Position }}",
+            "Application Date": "={{ $('Application Form/Resume Upload').item.json.submittedAt }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Fullname",
+              "displayName": "Fullname",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Gmail",
+              "displayName": "Gmail",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Position",
+              "displayName": "Position",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Senior Engineer",
+                  "value": "Senior Engineer"
+                },
+                {
+                  "name": "Power BI Specialist",
+                  "value": "Power BI Specialist"
+                },
+                {
+                  "name": "Data Analyst",
+                  "value": "Data Analyst"
+                },
+                {
+                  "name": "Software Engineer",
+                  "value": "Software Engineer"
+                },
+                {
+                  "name": "Web Designer",
+                  "value": "Web Designer"
+                },
+                {
+                  "name": "Product Manager",
+                  "value": "Product Manager"
+                },
+                {
+                  "name": "UX Designer",
+                  "value": "UX Designer"
+                },
+                {
+                  "name": "HR Specialist",
+                  "value": "HR Specialist"
+                },
+                {
+                  "name": "DevOps Engineer",
+                  "value": "DevOps Engineer"
+                },
+                {
+                  "name": "Marketing Coordinator",
+                  "value": "Marketing Coordinator"
+                },
+                {
+                  "name": "QA Tester",
+                  "value": "QA Tester"
+                },
+                {
+                  "name": "Accountant",
+                  "value": "Accountant"
+                },
+                {
+                  "name": "Sales Executive",
+                  "value": "Sales Executive"
+                },
+                {
+                  "name": "Customer Support",
+                  "value": "Customer Support"
+                },
+                {
+                  "name": "Backend Developer",
+                  "value": "Backend Developer"
+                },
+                {
+                  "name": "Office Manager",
+                  "value": "Office Manager"
+                },
+                {
+                  "name": "Frontend Developer",
+                  "value": "Frontend Developer"
+                },
+                {
+                  "name": "Recruiter",
+                  "value": "Recruiter"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Application Date",
+              "displayName": "Application Date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        816,
+        -448
+      ],
+      "id": "c64c6c8f-d260-46cc-be40-12797d8fe990",
+      "name": "Create Candidate Record",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "YOUR_AIRTABLE_CREDENTIAL_ID",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "eb8cf0ba-4afd-4980-9884-aa9c01dd281a",
+              "leftValue": "={{ $json.records.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        336,
+        -208
+      ],
+      "id": "709c690e-653d-4ee8-8edc-4722157ce448",
+      "name": "Is Duplicate?"
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "Resume",
+        "name": "={{ $json[\"Fullname\"].replace(/ /g,'_') }}_{{ $now.toFormat('yyyyMMdd') }}.{{ $json.Resume[0].filename.split('.').pop() }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1hbgxYeDm9fJUJzdh2ItXtCb-eLb8b6Ou",
+          "mode": "list",
+          "cachedResultName": "Applicants",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1hbgxYeDm9fJUJzdh2ItXtCb-eLb8b6Ou"
+        },
+        "options": {
+          "keepRevisionForever": true
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -80,
+        -448
+      ],
+      "id": "cd75476f-7f17-44aa-af75-1e6d41fef969",
+      "name": "Store in Google Drive",
+      "alwaysOutputData": false,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "HemZmr7J4RfqwExQ",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Extract and Process",
+        "height": 480,
+        "width": 448,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        528,
+        -512
+      ],
+      "id": "9322805b-19d7-4a93-ad67-41b0a9d811db",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## AI Analysis",
+        "height": 480,
+        "width": 368,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        992,
+        -512
+      ],
+      "id": "179461fe-1135-4cd4-aa41-9e87690b11b8",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_GROQ_CREDENTIAL_ID"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  model: \"llama-3.3-70b-versatile\",\n  messages: [\n    {\n      role: \"system\",\n      content: \"You are an expert recruitment analyst. Return ONLY valid JSON with: personal (name, email, phone), professional (skills, years_experience), evaluation (summary, strengths, total_score 0-100).\"\n    },\n    {\n      role: \"user\",\n      content: \"Analyze this resume: \" + $json.resumeText\n    }\n  ],\n  max_tokens: 2048\n}) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1120,
+        -256
+      ],
+      "id": "264bda42-19a2-49d0-a225-c9a5b846c13e",
+      "name": "AI Resume Analysis"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{ $json.choices[0].message.content.replaceAll('\\\\\\\\', '\\\\').replace(/\\\\n/g, '\\n') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1024,
+        -448
+      ],
+      "id": "2c7a32ef-7c4a-4cb6-bda4-ddcd05b6ae96",
+      "name": "Clean Data"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c5c12aeb-30ed-40d4-8cb8-bbec1930d497",
+              "name": "total_score",
+              "value": "={{ $json.evaluation.total_score }}",
+              "type": "string"
+            },
+            {
+              "id": "7887a133-a723-40bb-b124-8e5f3ce0a597",
+              "name": "score_label",
+              "value": "={{ $json.evaluation.total_score >= 80 ? \"Strong Match\" : $json.evaluation.total_score >= 60 ? \"Potential Match\" : \"Weak Match\" }}",
+              "type": "string"
+            },
+            {
+              "id": "b52b3101-16e8-4cde-9ad7-b679660d110e",
+              "name": "priority",
+              "value": "= {{ $json.evaluation.total_score >= 80 ? 1 : $json.evaluation.total_score >= 60 ? 2 : 3 }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1216,
+        -448
+      ],
+      "id": "6ad26b05-cef8-4a53-a426-8a96ae87d47e",
+      "name": "Calculate Score"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "YOUR_AIRTABLE_BASE_ID",
+          "mode": "list",
+          "cachedResultName": "AI Automation Tracker",
+          "cachedResultUrl": "https://airtable.com/YOUR_AIRTABLE_BASE_ID"
+        },
+        "table": {
+          "__rl": true,
+          "value": "YOUR_AIRTABLE_TABLE_ID",
+          "mode": "list",
+          "cachedResultName": "Employees",
+          "cachedResultUrl": "https://airtable.com/YOUR_AIRTABLE_BASE_ID/YOUR_AIRTABLE_TABLE_ID"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Fullname": "={{ $('Clean Data').item.json.personal.name }}",
+            "Gmail": "={{ $('Clean Data').item.json.personal.email }}",
+            "Phone": "={{ $('Clean Data').item.json.personal.phone }}",
+            "Position": "={{ $('Application Form/Resume Upload').item.json.Position }}",
+            "Application Date": "={{ $('Application Form/Resume Upload').item.json.submittedAt }}",
+            "Score Label": "={{ $json.score_label }}",
+            "Total Score": "={{ $json.total_score }}",
+            "Status": "Reviewed",
+            "Summary": "={{ $('Clean Data').item.json.evaluation.summary }}",
+            "Strengths": "={{ $('Clean Data').item.json.evaluation.strengths.join('\\n') }}",
+            "Skills": "={{ $('Clean Data').item.json.professional.skills.join('\\n') }}",
+            "id": "={{ $('Clean & Structure Data').item.json.id }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Fullname",
+              "displayName": "Fullname",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Gmail",
+              "displayName": "Gmail",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Position",
+              "displayName": "Position",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Senior Engineer",
+                  "value": "Senior Engineer"
+                },
+                {
+                  "name": "Power BI Specialist",
+                  "value": "Power BI Specialist"
+                },
+                {
+                  "name": "Data Analyst",
+                  "value": "Data Analyst"
+                },
+                {
+                  "name": "Software Engineer",
+                  "value": "Software Engineer"
+                },
+                {
+                  "name": "Web Designer",
+                  "value": "Web Designer"
+                },
+                {
+                  "name": "Product Manager",
+                  "value": "Product Manager"
+                },
+                {
+                  "name": "UX Designer",
+                  "value": "UX Designer"
+                },
+                {
+                  "name": "HR Specialist",
+                  "value": "HR Specialist"
+                },
+                {
+                  "name": "DevOps Engineer",
+                  "value": "DevOps Engineer"
+                },
+                {
+                  "name": "Marketing Coordinator",
+                  "value": "Marketing Coordinator"
+                },
+                {
+                  "name": "QA Tester",
+                  "value": "QA Tester"
+                },
+                {
+                  "name": "Accountant",
+                  "value": "Accountant"
+                },
+                {
+                  "name": "Sales Executive",
+                  "value": "Sales Executive"
+                },
+                {
+                  "name": "Customer Support",
+                  "value": "Customer Support"
+                },
+                {
+                  "name": "Backend Developer",
+                  "value": "Backend Developer"
+                },
+                {
+                  "name": "Office Manager",
+                  "value": "Office Manager"
+                },
+                {
+                  "name": "Frontend Developer",
+                  "value": "Frontend Developer"
+                },
+                {
+                  "name": "Recruiter",
+                  "value": "Recruiter"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Application Date",
+              "displayName": "Application Date",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Strengths",
+              "displayName": "Strengths",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Skills",
+              "displayName": "Skills",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Total Score",
+              "displayName": "Total Score",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Score Label",
+              "displayName": "Score Label",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1472,
+        -448
+      ],
+      "id": "0802005f-8946-4189-93de-970ce51197dc",
+      "name": "Save Analysis Results",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "YOUR_AIRTABLE_CREDENTIAL_ID",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Store and Notify Recruiter/Applicant",
+        "height": 480,
+        "width": 736,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1392,
+        -512
+      ],
+      "id": "b5c2bf18-05b0-497c-b347-0570b3789c4e",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "17ad5177-b511-4c0e-970f-cb760c1efaae",
+              "leftValue": "={{ $json.fields['Total Score'] }}",
+              "rightValue": "=80",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1456,
+        -224
+      ],
+      "id": "584bf233-c89a-4a42-893f-c69cf4172720",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Save Analysis Results').item.json.fields.Gmail }}",
+        "subject": "=Interview Invitation – {{ $('Application Form/Resume Upload').item.json.Position }}",
+        "emailType": "text",
+        "message": "=Dear {{ $('Application Form/Resume Upload').item.json.Fullname }},  \n\nThank you for your interest in the {{ $('Application Form/Resume Upload').item.json.Position }} position.\n\nWe are pleased to inform you that, after reviewing your application, we would like to invite you to an interview as the next step in our hiring process.  \n\nInterview Details:  \nPosition: {{ $('Application Form/Resume Upload').item.json.Position }}\nDate: (Interview_Date)\nTime: (Interview_Time) \nFormat: (Online/In-Person)\nLocation/Meeting Link: (Location or Link)  \n\nDuring the interview, we will discuss your qualifications, experience, and suitability for the role, as well as provide you with more information about the position and our organization.  \n\nPlease reply to this email to confirm your attendance. If you are unavailable at the scheduled time, let us know and we will do our best to arrange an alternative schedule. \n\nWe look forward to speaking with you and learning more about your background.  \n\nKind regards,\n\n(Recruiter_Name) \n(Company_Name) \n(Contact_Information)",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1904,
+        -368
+      ],
+      "id": "2a9fcc1a-63b1-4410-b2df-930bfa7bb7ea",
+      "name": "Interview Invitation",
+      "webhookId": "1b3cec7f-db5b-49c7-b58b-ce701d8a71fc",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_GMAIL_CREDENTIAL_ID",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "kchaserajvillamayor@gmail.com",
+        "subject": "Qualified Candidate Identified",
+        "emailType": "text",
+        "message": "=Hello Recruiter,\n\nA new applicant has successfully passed the initial screening process and has been identified as a qualified candidate for the position.  \n\nApplicant Details:  \n\nName: {{ $json.fields.Fullname }}\nPosition Applied For: {{ $json.fields.Position }}\nQualification Score: {{ $('Save Analysis Results').item.json.fields['Total Score'] }}\nApplication Date: {{ $('Save Analysis Results').item.json.fields['Application Date'] }}\n\nBased on the screening criteria and evaluation results, this applicant meets the required qualifications and is recommended to proceed to the next stage of the hiring process.  Please review the candidate's profile and resume for further assessment and interview scheduling.  \n\nBest regards,  \nAutomated Recruitment System",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1696,
+        -448
+      ],
+      "id": "78d66169-b73c-406e-ba3a-012e1f2a0408",
+      "name": "Notify Recruiter",
+      "webhookId": "7c1e03a3-f938-4e8f-9a0d-2e1d8ca32e03",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_GMAIL_CREDENTIAL_ID",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Application Form/Resume Upload').item.json.Email }}",
+        "subject": "Update on Your Application",
+        "emailType": "text",
+        "message": "=Dear {{ $('Application Form/Resume Upload').item.json.Fullname }},\n\nThank you for your interest in the {{ $('Application Form/Resume Upload').item.json.Position }} position and for taking the time to submit your application.\n\nAfter an initial review, your application has not been selected to move forward in the automated screening process at this time. However, our recruitment team may conduct additional reviews of applications before making final hiring decisions.\n\nWe appreciate the effort you invested in your application and encourage you to apply for future opportunities that match your skills and experience.\n\nThank you again for considering our organization. We wish you success in your job search and future endeavors.\n\nKind regards,\nRecruitment Team",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1696,
+        -256
+      ],
+      "id": "b0abfd07-ec1b-419e-86aa-c75e46e8395d",
+      "name": "Notify Applicant/Not Qualified",
+      "webhookId": "0af8e414-ffd1-4097-ab23-38dedc274ac8",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_GMAIL_CREDENTIAL_ID",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Check Duplicate Application",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Extract Resume",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Application Form/Resume Upload": {
+      "main": [
+        [
+          {
+            "node": "Store in Google Drive",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Duplicate Application": {
+      "main": [
+        [
+          {
+            "node": "Is Duplicate?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Resume": {
+      "main": [
+        [
+          {
+            "node": "Create Candidate Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Candidate Record": {
+      "main": [
+        [
+          {
+            "node": "Clean & Structure Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Duplicate?": {
+      "main": [
+        [
+          {
+            "node": "Rejection/Existing Application",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Store in Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean & Structure Data": {
+      "main": [
+        [
+          {
+            "node": "AI Resume Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Resume Analysis": {
+      "main": [
+        [
+          {
+            "node": "Clean Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean Data": {
+      "main": [
+        [
+          {
+            "node": "Calculate Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Score": {
+      "main": [
+        [
+          {
+            "node": "Save Analysis Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Analysis Results": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Notify Recruiter",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify Applicant/Not Qualified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Recruiter": {
+      "main": [
+        [
+          {
+            "node": "Interview Invitation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "bbad618a-7b51-4812-91f1-f0d28cae5d6e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "YOUR_N8N_INSTANCE_ID"
+  },
+  "id": "vmmu8RLUnmn9gAIC",
+  "tags": []
+}
