@@ -1,110 +1,123 @@
 # AI Recruitment Automation Workflow
 
-An AI-powered recruitment workflow built with **n8n** that automates candidate screening, resume analysis, qualification scoring, and applicant communication.
+An AI-powered recruitment system built with **n8n** that automates candidate screening, resume analysis, scoring, and applicant communication.
 
-Designed to reduce manual hiring effort, improve screening consistency, and accelerate the recruitment process through workflow automation and AI-driven evaluation.
+This workflow reduces manual hiring effort, improves screening consistency, and speeds up recruitment through AI-driven evaluation and automation.
 
 ---
 
 ## Overview
 
-Recruiters often spend hours manually reviewing resumes, identifying qualified candidates, managing applicant records, and sending repetitive emails.
+Recruitment teams often spend significant time manually reviewing resumes, identifying qualified candidates, and sending repetitive communications.
 
-This workflow automates the entire initial screening process, from application submission to candidate qualification and recruiter notification.
+This workflow automates the entire initial hiring pipeline — from application submission to candidate decision-making and recruiter notification.
 
-The system:
+### What it does
 
-* Accepts candidate applications through an online form
-* Stores resumes in Google Drive
-* Detects duplicate applications
-* Extracts text from PDF resumes
-* Uses AI to evaluate candidate qualifications
-* Generates qualification scores
-* Stores applicant data in Airtable
-* Notifies recruiters of qualified candidates
-* Sends automated interview invitations
-* Sends rejection emails when requirements are not met
+- Accepts candidate applications via form  
+- Stores resumes in Google Drive  
+- Detects duplicate applications  
+- Extracts and processes resume text (PDF)  
+- Uses AI to evaluate candidate suitability  
+- Generates qualification scores  
+- Stores structured data in Airtable  
+- Sends recruiter notifications  
+- Sends automated interview invitations  
+- Sends rejection emails for non-qualified applicants  
 
 ---
 
 ## Key Features
 
-### Application Submission Portal
+### Application Intake System
 
 Applicants submit:
 
-* Full Name
-* Email Address
-* Phone Number
-* Position Applied For
-* Resume (PDF)
+- Full Name  
+- Email Address  
+- Phone Number  
+- Position Applied For  
+- Resume (PDF)  
+
+---
 
 ### Automated Resume Storage
 
-All submitted resumes are automatically stored in Google Drive for centralized document management and future reference.
+All uploaded resumes are automatically stored in Google Drive for centralized access and record keeping.
+
+---
 
 ### Duplicate Application Detection
 
-Before processing a candidate, the workflow checks Airtable for previous applications.
+Before processing, the system checks Airtable for existing applications.
 
-Benefits:
+**Benefits:**
 
-* Prevents duplicate records
-* Reduces recruiter workload
-* Maintains clean applicant databases
+- Prevents duplicate entries  
+- Keeps database clean  
+- Reduces unnecessary processing  
 
-### Resume Parsing
+---
 
-The workflow extracts text from uploaded PDF resumes and prepares the content for AI analysis.
+### Resume Parsing Engine
 
-### AI-Powered Resume Analysis
+Extracts structured text from PDF resumes and prepares it for AI evaluation.
 
-Using Llama 3.3 70B via Groq API, the workflow evaluates:
+---
 
-* Professional experience
-* Technical skills
-* Strengths
-* Overall candidate suitability
+### AI Resume Evaluation
 
-The AI returns structured JSON data for downstream processing.
+Uses **Llama 3.3 70B via Groq API** to analyze candidates based on:
 
-### Candidate Qualification Scoring
+- Work experience  
+- Technical skills  
+- Strengths  
+- Overall job fit  
 
-Each candidate receives:
+The AI returns structured JSON output for workflow processing.
 
-* Qualification Score (0–100)
-* Match Classification
+---
 
-  * Strong Match
-  * Potential Match
-  * Weak Match
-* Priority Ranking
+### Candidate Scoring System
+
+Each applicant is assigned:
+
+- Score (0–100)  
+- Match Level:
+  - Strong Match  
+  - Potential Match  
+  - Weak Match  
+- Priority Ranking  
+
+---
 
 ### Airtable Candidate Database
 
-The workflow automatically stores:
+Stores all applicant data including:
 
-* Applicant Information
-* Resume Analysis Results
-* Skills
-* Evaluation Summary
-* Qualification Scores
-* Review Status
+- Personal information  
+- Resume analysis results  
+- Skills extracted  
+- AI evaluation summary  
+- Scores and rankings  
+- Application status  
 
-### Automated Communication
+---
 
-#### Qualified Candidates
+### Automated Communication System
 
-* Recruiter receives notification
-* Candidate receives interview invitation
+#### For Qualified Candidates
 
-#### Non-Qualified Candidates
+- Recruiter notification sent  
+- Interview invitation emailed to candidate  
 
-* Candidate receives rejection email
+#### For Non-Qualified Candidates
 
-#### Duplicate Applications
+- Automated rejection email sent  
 
-* Candidate receives duplicate application notification
+#### For Duplicate Applications
+
+- Duplicate application notification sent  
 
 ---
 
@@ -122,261 +135,160 @@ Google Drive Storage
         ▼
 Duplicate Check
         │
- ┌──────┴──────┐
- │             │
- ▼             ▼
-Duplicate    Continue
-Notice         │
-               ▼
-      Resume Extraction
-               │
-               ▼
-      Candidate Record
-               │
-               ▼
-       AI Analysis
-               │
-               ▼
-      Qualification Score
-               │
-               ▼
-     Save to Airtable
-               │
-               ▼
-      Candidate Decision
-               │
-      ┌────────┴────────┐
-      │                 │
-      ▼                 ▼
-Qualified         Not Qualified
-      │                 │
-      ▼                 ▼
-Recruiter Alert   Rejection Email
-      │
-      ▼
+        ▼
+Resume Extraction
+        │
+        ▼
+AI Analysis (Groq Llama 3.3 70B)
+        │
+        ▼
+Scoring & Classification
+        │
+        ▼
+Airtable Storage
+        │
+        ▼
+Decision Engine
+        │
+   ┌────┴────┐
+   ▼         ▼
+Qualified   Rejected
+   │         │
+   ▼         ▼
+Recruiter   Rejection Email
+Notification
+   │
+   ▼
 Interview Invitation
-```
+
 
 ---
 
 ## Technology Stack
 
 ### Automation
-
-* n8n
+- n8n  
 
 ### AI
-
-* Groq API
-* Llama 3.3 70B
+- Groq API  
+- Llama 3.3 70B  
 
 ### Database
-
-* Airtable
+- Airtable  
 
 ### Storage
-
-* Google Drive
+- Google Drive  
 
 ### Communication
+- Gmail  
+- Telegram (optional)  
 
-* Gmail
-
-### Document Processing
-
-* PDF Resume Extraction
+### Processing
+- PDF Resume Extraction  
 
 ---
 
 ## Business Impact
 
-This workflow helps organizations:
+This system helps organizations:
 
-* Reduce manual resume screening
-* Improve hiring consistency
-* Accelerate candidate evaluation
-* Maintain organized applicant records
-* Automate recruiter communication
-* Improve recruitment scalability
-
----
-
-## Screenshots
-
-### Workflow Overview
-
-`/screenshots/workflow-overview.png`
-
-### Airtable Candidate Dashboard
-
-`/screenshots/airtable-dashboard.png`
-
-### Automated Email Notifications
-
-`/screenshots/email-samples.png`
+- Reduce manual resume screening time  
+- Improve hiring consistency  
+- Speed up candidate evaluation  
+- Maintain structured applicant data  
+- Automate recruiter communication  
+- Scale recruitment operations efficiently  
 
 ---
 
-## Setup
+## Setup Instructions
 
-1. Import the workflow into n8n
-2. Configure Airtable credentials
-3. Configure Google Drive credentials
-4. Configure Gmail credentials
-5. Configure Groq API credentials
-6. Create the Airtable database structure
-7. Publish the application form
-8. Run end-to-end testing
+1. Import workflow into n8n  
+2. Configure Airtable credentials  
+3. Configure Google Drive credentials  
+4. Configure Gmail credentials  
+5. Configure Groq API credentials  
+6. Set up Airtable schema  
+7. Deploy application form  
+8. Run test applications  
 
 ---
 
 ## Future Enhancements
 
-### Recruiter Approval Workflow
-
-Introduce a human-in-the-loop approval process before sending interview invitations.
-
-Benefits:
-
-* Human validation
-* Reduced false positives
-* Better hiring decisions
+### Human-in-the-Loop Approval
+Add recruiter approval before sending interview invitations.
 
 ---
 
-### Multi-Stage Candidate Tracking
+### Candidate Tracking Pipeline
+Track full lifecycle:
 
-Track applicants throughout the recruitment lifecycle:
-
-* Applied
-* Under Review
-* Qualified
-* Interview Scheduled
-* Interview Completed
-* Hired
-* Rejected
+- Applied  
+- Under Review  
+- Qualified  
+- Interview Scheduled  
+- Hired  
+- Rejected  
 
 ---
 
 ### Recruiter Dashboard
+Real-time summary:
 
-Generate recruiter-friendly summaries such as:
-
-```text
-Candidate: John Doe
-Position: Software Engineer
-Score: 87/100
-Skills: JavaScript, React, SQL
-Recommendation: Interview
-```
+- Candidate score  
+- Skill match  
+- Recommendation status  
 
 ---
 
-### Audit Logging
+### Audit Logging System
+Tracks:
 
-Create a complete activity trail containing:
-
-* Timestamp
-* Candidate
-* Action
-* Status
-* User
-
-Useful for compliance, reporting, and process visibility.
+- Actions  
+- Timestamps  
+- Candidate updates  
+- Workflow status changes  
 
 ---
 
-### Error Handling & Recovery
-
-Implement dedicated error-handling workflows using n8n Error Triggers.
-
-Features:
-
-* Capture failed executions
-* Log errors to Airtable
-* Notify administrators
-* Retry failed operations automatically
-* Monitor workflow reliability
-
----
-
-### Candidate Ranking Sub-Workflow
-
-Build a separate ranking workflow that:
-
-* Fetches all reviewed candidates
-* Sorts candidates by qualification score
-* Assigns rankings automatically
-* Updates Airtable records
-* Highlights top applicants
-
----
-
-### Dashboard Integration
-
-Integrate with:
-
-* Airtable Interfaces
-* Retool
-* Appsmith
-
-Features:
-
-* Real-time recruitment metrics
-* Candidate statistics
-* Hiring pipeline visualization
-
-Webhook triggers can automatically update dashboards whenever a candidate is reviewed.
+### Error Handling System
+- Failed execution logging  
+- Retry mechanism  
+- Admin alerts  
+- Error tracking in Airtable  
 
 ---
 
 ### Bulk Resume Processing
-
-Enable recruiters to upload ZIP files containing multiple resumes.
-
-Features:
-
-* Bulk PDF extraction
-* Parallel AI analysis
-* Batch candidate creation
-* Bulk qualification scoring
-
-Ideal for high-volume recruitment campaigns.
+Supports ZIP uploads for batch resume evaluation.
 
 ---
 
-### Telegram Recruiter Notifications
-
-Send real-time Telegram alerts when qualified candidates are identified.
+### Telegram Notifications
+Instant alerts for qualified candidates.
 
 ---
 
 ### Calendar Integration
-
-Automatically schedule interviews using:
-
-* Google Calendar
-* Microsoft Outlook
+Automated interview scheduling via Google Calendar or Outlook.
 
 ---
 
 ### ATS Integration
-
-Connect with Applicant Tracking Systems (ATS) for enterprise-grade recruitment workflows.
+Connect with external Applicant Tracking Systems.
 
 ---
 
 ## Security Notes
 
-Before publishing the workflow publicly:
+Before publishing:
 
-* Remove API keys
-* Remove access tokens
-* Remove OAuth credentials
-* Remove webhook IDs
-* Remove personal email addresses
-
-Replace all sensitive values with placeholders before committing to GitHub.
+- Remove API keys  
+- Remove tokens  
+- Remove webhook URLs  
+- Remove personal credentials  
+- Replace sensitive values with placeholders  
 
 ---
 
