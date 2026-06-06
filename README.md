@@ -1,4 +1,4 @@
-# n8n-automation-portfolio
+# n8n-automation
 Business automation workflows built with n8n, AI, Google Workspace, Telegram, and API integrations.
 
 ## Projects
