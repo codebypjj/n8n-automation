@@ -1,4 +1,4 @@
-# MindMate – AI Recruitment Intelligence Platform
+# AI Recruitment Intelligence Platform
 
 An AI-powered recruitment intelligence platform that automates candidate intake, resume analysis, candidate evaluation, and recruiter-ready summaries.
 
@@ -6,7 +6,7 @@ Built with n8n, Supabase, Groq AI, and Retrieval-Augmented Generation (RAG), Min
 
 ## Project Overview
 
-MindMate automates the initial recruitment screening process by:
+It automates the initial recruitment screening process by:
 
 * Collecting candidate applications
 * Parsing resumes using AI
