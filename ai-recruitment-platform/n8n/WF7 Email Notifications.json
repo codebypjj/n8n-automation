@@ -1,0 +1,276 @@
+{
+  "name": "WF7 Email Notifications",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "wf7-email-notifications",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        -96
+      ],
+      "id": "07ee139c-05e4-499f-a1ca-7a404ac0c727",
+      "name": "Webhook",
+      "webhookId": "YOUR_WEBHOOK_ID"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "candidates",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "keyValue": "={{ $json.body.candidate_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        448,
+        -176
+      ],
+      "id": "b18e2eab-f103-4911-9276-1cb62a743cff",
+      "name": "Fetch Email Data",
+      "credentials": {
+        "supabaseApi": {
+          "id": "YOUR_SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const candidate = $input.first().json;\nconst body = $('Webhook').first().json.body;\n\nconst notify_type    = body.notify_type;\nconst candidate_name = body.candidate_name || candidate.full_name;\nconst score          = body.score;\nconst recommendation = body.recommendation;\nconst recruiter_summary = body.recruiter_summary;\n\n// Email templates\nconst templates = {\n  shortlisted: {\n    subject: `Great news! Your MindMate application is moving forward`,\n    body: `Hi ${candidate_name},\n\nWe're excited to let you know that your application has been reviewed by our AI screening system and you've been shortlisted!\n\nHere's your evaluation summary:\n${recruiter_summary}\n\nAI Score: ${score}/100 — ${recommendation}\n\nOur recruiting team will be in touch shortly to discuss next steps.\n\nBest regards,\nMindMate Recruiting Team`\n  },\n  rejected: {\n    subject: `Your MindMate application update`,\n    body: `Hi ${candidate_name},\n\nThank you for taking the time to apply to MindMate. After carefully reviewing your application, we regret to inform you that we will not be moving forward with your candidacy at this time.\n\nAI Score: ${score}/100\n\nWe appreciate your interest in MindMate and encourage you to apply again in the future as new roles open up.\n\nBest regards,\nMindMate Recruiting Team`\n  },\n  interview: {\n    subject: `Interview invitation — MindMate`,\n    body: `Hi ${candidate_name},\n\nWe'd love to speak with you! Please expect a calendar invite from our recruiting team shortly.\n\nBest regards,\nMindMate Recruiting Team`\n  },\n  offer: {\n    subject: `Job offer from MindMate`,\n    body: `Hi ${candidate_name},\n\nWe are thrilled to extend an offer to join MindMate! Our team will be in touch with the details shortly.\n\nBest regards,\nMindMate Recruiting Team`\n  }\n};\n\nconst template = templates[notify_type] || templates.rejected;\n\nreturn [{\n  json: {\n    candidate_id:    body.candidate_id,\n    application_id:  body.application_id,\n    to_email:        candidate.email,\n    candidate_name:  candidate_name,\n    subject:         template.subject,\n    body:            template.body,\n    notify_type:     notify_type,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        -304
+      ],
+      "id": "6e710a42-ca89-4305-aa31-ff173f226340",
+      "name": "Build Email"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.to_email }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.body }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        -400
+      ],
+      "id": "bb53514d-fd7b-4830-b1d4-1ea2f12f654d",
+      "name": "Send Email",
+      "webhookId": "YOUR_GMAIL_WEBHOOK_ID",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_GMAIL_CREDENTIAL_ID",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "activities",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "application_id",
+              "fieldValue": "={{ $('Build Email').first().json.application_id }}"
+            },
+            {
+              "fieldId": "actor_id",
+              "fieldValue": "=system"
+            },
+            {
+              "fieldId": "action",
+              "fieldValue": "email_sent"
+            },
+            {
+              "fieldId": "metadata",
+              "fieldValue": "={{ JSON.stringify({ event_type: $('Build Email').first().json.notify_type, recipient: $('Build Email').first().json.to_email, template_used: $('Build Email').first().json.notify_type }) }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1104,
+        -288
+      ],
+      "id": "67d685f0-2a46-4e30-aa75-b1324439bc60",
+      "name": "Log Activity",
+      "credentials": {
+        "supabaseApi": {
+          "id": "YOUR_SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "7f5a55ec-5b69-47f8-8bc4-17df49893306",
+              "leftValue": "= {{ $json.body.notify_type }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        224,
+        -96
+      ],
+      "id": "2613203c-9e01-497c-9ac9-2558312dbaa5",
+      "name": "Should Notify?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "YOUR_WF8_WEBHOOK_URL",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Webhook-Secret",
+              "value": "YOUR_WEBHOOK_SECRET"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"candidate_id\":   \"{{ $('Build Email').first().json.candidate_id }}\",\n  \"application_id\": \"{{ $('Build Email').first().json.application_id }}\",\n  \"notify_type\":    \"{{ $('Build Email').first().json.notify_type }}\",\n  \"new_status\":     \"{{ $('Webhook').first().json.body.new_status }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1312,
+        -176
+      ],
+      "id": "b122d955-fa5d-4ae8-b0a3-2cc5776058b9",
+      "name": "Trigger WF8"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Should Notify?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Email Data": {
+      "main": [
+        [
+          {
+            "node": "Build Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Email": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email": {
+      "main": [
+        [
+          {
+            "node": "Log Activity",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Notify?": {
+      "main": [
+        [
+          {
+            "node": "Fetch Email Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Activity": {
+      "main": [
+        [
+          {
+            "node": "Trigger WF8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "YOUR_ERROR_WORKFLOW_ID",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "b48226b7-d82c-4697-848e-8e19f6c055e1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "YOUR_INSTANCE_ID"
+  },
+  "nodeGroups": [],
+  "id": "YOUR_WORKFLOW_ID",
+  "tags": []
+}

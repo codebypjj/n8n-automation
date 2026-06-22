@@ -1,0 +1,319 @@
+{
+  "name": "WF1 Submission",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "wf1-candidate-submission",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        -32
+      ],
+      "id": "7c460ff4-0726-49b4-849c-8badf5df4c72",
+      "name": "Webhook",
+      "webhookId": "GENERATED_WEBHOOK_ID",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YOUR_HEADER_AUTH_CREDENTIAL_ID",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body;\n\n//Grab Data\nconst candidate_id = $input.first().json.body.candidate_id;\nconst application_id = $input.first().json.body.application_id;\n\n//Validate Required Fields\nconst required = ['full_name', 'email', 'phone', 'job_id'];\nfor (const field of required) {\n  if (!body[field]) throw new Error ('Missing field: ${field}');\n}\n\n//Pass Payload\nreturn [{\n  json: {\n    candidate_id,\n    application_id,\n    full_name:        body.full_name,\n    email:            body.email.toLowerCase().trim(),\n    phone:            body.phone,\n    location:         body.location || null,\n    linkedin_url:     body.linkedin_url || null,\n    portfolio_url:    body.portfolio_url || null,\n    source:           body.source || null,\n    job_id:           body.job_id,\n    years_experience: body.years_experience || null,\n    cover_letter:     body.cover_letter || null,\n    resume_url:       body.resume_url || null,\n    resume_storage_path: body.resume_storage_path || null,\n    resume_filename:  body.resume_filename || null,\n    resume_size_bytes: body.resume_size_bytes || null,\n    submitted_at:     body.submitted_at || new Date().toISOString(),\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        -32
+      ],
+      "id": "63aaba20-9190-493e-ab23-c2c2bfb3a5db",
+      "name": "Validate + Build Payload"
+    },
+    {
+      "parameters": {
+        "tableId": "candidates",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "id",
+              "fieldValue": "={{ $json.candidate_id }}"
+            },
+            {
+              "fieldId": "full_name",
+              "fieldValue": "={{ $json.full_name }}"
+            },
+            {
+              "fieldId": "email",
+              "fieldValue": "={{ $json.email }}"
+            },
+            {
+              "fieldId": "phone",
+              "fieldValue": "={{ $json.phone }}"
+            },
+            {
+              "fieldId": "location",
+              "fieldValue": "={{ $json.location }}"
+            },
+            {
+              "fieldId": "linkedin_url",
+              "fieldValue": "={{ $json.linkedin_url }}"
+            },
+            {
+              "fieldId": "portfolio_url",
+              "fieldValue": "={{ $json.portfolio_url }}"
+            },
+            {
+              "fieldId": "source",
+              "fieldValue": "={{ $json.source }}"
+            },
+            {
+              "fieldId": "resume_url",
+              "fieldValue": "={{ $json.resume_url }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        448,
+        -32
+      ],
+      "id": "fe493ecc-49af-4aa3-a6f7-f75b4699209a",
+      "name": "Insert Candidate",
+      "credentials": {
+        "supabaseApi": {
+          "id": "YOUR_SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "applications",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "id",
+              "fieldValue": "={{ $('Validate + Build Payload').item.json.application_id }}"
+            },
+            {
+              "fieldId": "candidate_id",
+              "fieldValue": "={{ $('Validate + Build Payload').item.json.candidate_id }}"
+            },
+            {
+              "fieldId": "job_id",
+              "fieldValue": "={{ $('Validate + Build Payload').item.json.job_id }}"
+            },
+            {
+              "fieldId": "company_id",
+              "fieldValue": "YOUR_COMPANY_ID"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "applied"
+            },
+            {
+              "fieldId": "cover_letter",
+              "fieldValue": "={{ $('Validate + Build Payload').item.json.cover_letter }}"
+            },
+            {
+              "fieldId": "years_experience",
+              "fieldValue": "={{ $('Validate + Build Payload').item.json.years_experience }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        672,
+        48
+      ],
+      "id": "f73ed734-ea38-45ff-9224-6731496047fa",
+      "name": "Insert Application",
+      "credentials": {
+        "supabaseApi": {
+          "id": "YOUR_SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "documents",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "candidate_id",
+              "fieldValue": "={{ $json.candidate_id }}"
+            },
+            {
+              "fieldId": "type",
+              "fieldValue": "resume"
+            },
+            {
+              "fieldId": "filename",
+              "fieldValue": "={{ $('Validate + Build Payload').item.json.resume_filename }}"
+            },
+            {
+              "fieldId": "storage_path",
+              "fieldValue": "={{ $('Validate + Build Payload').item.json.resume_storage_path }}"
+            },
+            {
+              "fieldId": "size_bytes",
+              "fieldValue": "={{ $('Validate + Build Payload').item.json.resume_size_bytes }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        896,
+        112
+      ],
+      "id": "f320d301-938e-4d64-9012-e9978a0b300a",
+      "name": "Upload Resume",
+      "credentials": {
+        "supabaseApi": {
+          "id": "YOUR_SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://YOUR-N8N-DOMAIN/webhook/wf2-resume-parsing",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Webhook-Secret",
+              "value": "YOUR_WEBHOOK_SECRET"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "candidate_id",
+              "value": "={{ $json.candidate_id }}"
+            },
+            {
+              "name": "application_id",
+              "value": "={{ $('Validate + Build Payload').item.json.application_id }}"
+            },
+            {
+              "name": "job_id",
+              "value": "={{ $('Validate + Build Payload').item.json.job_id }}"
+            },
+            {
+              "name": "resume_storage_path",
+              "value": "={{ $('Validate + Build Payload').item.json.resume_storage_path }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1120,
+        192
+      ],
+      "id": "8124b5b2-56a4-49eb-9285-70c2d8f25690",
+      "name": "Trigger WF2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate + Build Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate + Build Payload": {
+      "main": [
+        [
+          {
+            "node": "Insert Candidate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Candidate": {
+      "main": [
+        [
+          {
+            "node": "Insert Application",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Application": {
+      "main": [
+        [
+          {
+            "node": "Upload Resume",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Resume": {
+      "main": [
+        [
+          {
+            "node": "Trigger WF2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger WF2": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "IaO21etUMZsGv54V",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "17af531b-2c50-405f-b72c-9914af2cc384",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "INSTANCE_ID"
+  },
+  "nodeGroups": [],
+  "id": "WORKFLOW_ID",
+  "tags": []
+}

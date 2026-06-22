@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css">
+  <title>CLIENT_NAME Careers</title>
+
+</head>
+
+<body>
+  <div class="page-wrap">
+
+    <!-- Header -->
+    <div class="header">
+      <div class="header-logo" id="logoBox">
+        <img id="logoImg" src="CLIENT_LOGO" alt="CLIENT_NAME" />
+      </div>
+      <div class="header-text">
+        <h1 id="companyName"></h1>
+        <p>Job application</p>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-wrap">
+      <div class="progress-labels">
+        <span class="progress-label active" id="step-1">Personal info</span>
+        <span class="progress-label" id="step-2">Role &amp; experience</span>
+        <span class="progress-label" id="step-3">Documents</span>
+        <span class="progress-label" id="step-4">Review</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill" style="width: 25%"></div>
+      </div>
+    </div>
+
+    <!-- Form -->
+    <div class="form-main" id="formMain">
+
+      <!-- Section 1: Personal info -->
+      <div class="card" id="section-1">
+        <div class="card-title">
+          <div class="card-title-num">1</div>
+          Personal information
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="full_name">Full name <span class="req">*</span></label>
+            <input type="text" id="full_name" name="full_name" placeholder="Jane Dela Cruz" autocomplete="name"
+              required />
+            <span class="field-error" id="err-full_name">Please enter your full name.</span>
+          </div>
+          <div class="field">
+            <label for="email">Email address <span class="req">*</span></label>
+            <input type="email" id="email" name="email" placeholder="jane@example.com" autocomplete="email" required />
+            <span class="field-error" id="err-email">Please enter a valid email.</span>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="phone">Phone number <span class="req">*</span></label>
+            <input type="tel" id="phone" name="phone" placeholder="+63 917 000 0000" autocomplete="tel" required />
+            <span class="field-error" id="err-phone">Please enter a phone number.</span>
+          </div>
+          <div class="field">
+            <label for="location">Location <span class="label-optional">(optional)</span></label>
+            <input type="text" id="location" name="location" placeholder="Manila, Philippines"
+              autocomplete="address-level2" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="linkedin_url">LinkedIn profile <span class="label-optional">(optional)</span></label>
+          <input type="url" id="linkedin_url" name="linkedin_url" placeholder="https://linkedin.com/in/janedelacruz" />
+          <span class="field-error" id="err-linkedin_url">Must be a valid linkedin.com URL.</span>
+        </div>
+
+        <div class="field">
+          <label for="portfolio_url">Portfolio / website <span class="label-optional">(optional)</span></label>
+          <input type="url" id="portfolio_url" name="portfolio_url" placeholder="https://yoursite.com" />
+          <span class="field-error" id="err-portfolio_url">Please enter a valid URL.</span>
+        </div>
+      </div>
+
+      <!-- Section 2: Role & experience -->
+      <div class="card" id="section-2">
+        <div class="card-title">
+          <div class="card-title-num">2</div>
+          Role &amp; experience
+        </div>
+
+        <div class="field">
+          <label for="job_id">Position applying for <span class="req">*</span></label>
+          <select id="job_id" name="job_id" required>
+            <option value="">Select a role…</option>
+          </select>
+          <span class="field-error" id="err-job_id">Please select a position.</span>
+        </div>
+
+        <div class="field">
+          <label for="years_experience">Years of experience <span class="req">*</span></label>
+          <select id="years_experience" name="years_experience" required>
+            <option value="">Select…</option>
+            <option value="0">Less than 1 year</option>
+            <option value="1">1 year</option>
+            <option value="2">2 years</option>
+            <option value="3">3 years</option>
+            <option value="4">4 years</option>
+            <option value="5">5 years</option>
+            <option value="7">6 to 8 years</option>
+            <option value="9">9 to 11 years</option>
+            <option value="12">12+ years</option>
+          </select>
+          <span class="field-error" id="err-years_experience">Please select your experience level.</span>
+        </div>
+
+        <div class="field">
+          <label for="cover_letter">Cover letter <span class="label-optional">(optional)</span></label>
+          <textarea id="cover_letter" name="cover_letter" placeholder="Tell us why you're a great fit for this role…"
+            maxlength="2000" rows="5" oninput="updateCharCount(this, 'cc-cover')"></textarea>
+          <div class="char-count" id="cc-cover">0 / 2000</div>
+        </div>
+
+        <div class="field">
+          <label>How did you hear about us? <span class="label-optional">(optional)</span></label>
+          <div class="source-chips" id="sourceChips">
+            <div class="source-chip" data-value="linkedin">LinkedIn</div>
+            <div class="source-chip" data-value="referral">Referral</div>
+            <div class="source-chip" data-value="job_board">Job board</div>
+            <div class="source-chip" data-value="direct">Company website</div>
+            <div class="source-chip" data-value="social">Social media</div>
+            <div class="source-chip" data-value="other">Other</div>
+          </div>
+          <input type="hidden" id="source" name="source" value="" />
+        </div>
+      </div>
+
+      <!-- Section 3: Documents -->
+      <div class="card" id="section-3">
+        <div class="card-title">
+          <div class="card-title-num">3</div>
+          Documents
+        </div>
+
+        <div class="field">
+          <label>Resume / CV <span class="req">*</span></label>
+          <div class="dropzone" id="dropzone">
+            <input type="file" id="resume_file" name="resume_file" accept=".pdf,.doc,.docx"
+              aria-label="Upload resume" />
+            <span class="dropzone-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+            </span>
+            <div class="dropzone-text">Drop your resume here, or click to browse</div>
+            <div class="dropzone-sub">PDF or DOCX — max 5 MB</div>
+          </div>
+
+          <div class="file-preview" id="filePreview">
+            <span class="file-preview-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+              </svg>
+            </span>
+            <span class="file-preview-name" id="fileName">—</span>
+            <span class="file-preview-size" id="fileSize"></span>
+            <button type="button" class="file-remove" id="fileRemove" aria-label="Remove file"
+              title="Remove file">×</button>
+          </div>
+
+          <div class="upload-progress" id="uploadProgress">
+            <div class="upload-progress-bar">
+              <div class="upload-progress-fill" id="uploadFill"></div>
+            </div>
+            <div class="upload-progress-label" id="uploadLabel">Uploading…</div>
+          </div>
+
+          <span class="field-error" id="err-resume_file">Please upload your resume (PDF or DOCX, max 5 MB).</span>
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <div class="submit-wrap">
+        <button type="button" class="btn-submit" id="submitBtn" onclick="handleSubmit()">
+          <div class="spinner" aria-hidden="true"></div>
+          <span class="btn-label">Submit application</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Success screen -->
+    <div class="success-screen card" id="successScreen">
+      <div class="success-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 6L9 17l-5-5" />
+        </svg>
+      </div>
+      <h2>Application submitted!</h2>
+      <p>Thanks for applying. We'll review your application and be in touch within a few business days.</p>
+      <div class="success-ref" id="successRef"></div>
+    </div>
+  </div>
+
+  <!-- Toast container -->
+  <div class="toast-wrap" id="toastWrap" aria-live="polite"></div>
+  <script src="script.js"></script>
+</body>
+
+</html>

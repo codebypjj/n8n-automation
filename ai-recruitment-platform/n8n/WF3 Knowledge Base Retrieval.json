@@ -1,0 +1,256 @@
+{
+  "name": "WF3 Knowledge Base Retrieval",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "wf3-kb-retrieval",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "2ce20667-d50b-4fc9-ad40-b479de46fa37",
+      "name": "Webhook",
+      "webhookId": "YOUR_WEBHOOK_ID"
+    },
+    {
+      "parameters": {
+        "jsCode": "const job = $input.first().json;\n\n// Build search query from job details\nconst required = job.requirements.required.join(', ');\nconst optional = job.requirements.nice_to_have.join(', ');\n\nconst query_text = [\n  job.title,\n  `Required skills: ${required}`,\n  `Nice to have: ${optional}`,\n  `Education: ${job.education_requirement}`,\n  `Experience: ${job.requirements.years_exp} years`\n].join('. ');\n\nreturn [{\n  json: {\n    candidate_id:   $('Webhook').first().json.body.candidate_id,\n    application_id: $('Webhook').first().json.body.application_id,\n    job_id:         job.id,\n    company_id:     job.company_id,\n    job_title:      job.title,\n    requirements:   job.requirements,\n    query_text:     query_text,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "7a19fddf-2796-44b0-89f5-41c25e049da6",
+      "name": "Build Search Query"
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = $input.all().map(item => item.json);\n\nconst sections = results.map(r => {\n  const header = r.category.toUpperCase().replace(/_/g, ' ');\n  return `--- ${header} ---\\n${r.content.trim()}`;\n});\n\nconst kb_context = sections.join('\\n\\n');\n\nreturn [{\n  json: {\n    candidate_id:   $('Build Search Query').first().json.candidate_id,\n    application_id: $('Build Search Query').first().json.application_id,\n    job_id:         $('Build Search Query').first().json.job_id,\n    job_title:      $('Build Search Query').first().json.job_title,\n    requirements:   $('Build Search Query').first().json.requirements,\n    kb_context:     kb_context,\n    chunks_used:    results.length,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        0
+      ],
+      "id": "8c712fd3-29df-4b51-be7b-fbb8ffef79db",
+      "name": "Format Context"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "jobs",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "keyValue": "={{ $json.body.job_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "4f464af3-2288-4a9a-b588-4d43e7cea893",
+      "name": "Get Job Details",
+      "credentials": {
+        "supabaseApi": {
+          "id": "YOUR_SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "YOUR_WF4_WEBHOOK_URL",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Webhook-Secret",
+              "value": "YOUR_WEBHOOK_SECRET"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "candidate_id",
+              "value": "={{ $json.candidate_id }}"
+            },
+            {
+              "name": "application_id",
+              "value": "={{ $json.application_id }}"
+            },
+            {
+              "name": "job_id",
+              "value": "={{ $json.job_id }}"
+            },
+            {
+              "name": "job_title",
+              "value": "={{ $json.job_title }}"
+            },
+            {
+              "name": "requirements",
+              "value": "={{ $json.requirements }}"
+            },
+            {
+              "name": "kb_context",
+              "value": "={{ $json.kb_context }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "3efe66e8-83a4-4703-85ff-34a64dfe0bc9",
+      "name": "trigger WF4"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "YOUR_SUPABASE_PROJECT_URL/rest/v1/rpc/search_knowledge_base",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "YOUR_SUPABASE_ANON_KEY.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwYmdoY3hqY2h4bGZ3bHRhYmZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzNDAyMjYsImV4cCI6MjA5NjkxNjIyNn0.wDHjjZMpyPKB-fCDv_Jsbr7Ji5M7IF0mKvqwe0Fovhk"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_SUPABASE_ANON_KEY.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwYmdoY3hqY2h4bGZ3bHRhYmZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEzNDAyMjYsImV4cCI6MjA5NjkxNjIyNn0.wDHjjZMpyPKB-fCDv_Jsbr7Ji5M7IF0mKvqwe0Fovhk"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "query_text",
+              "value": "={{ $json.query_text }}"
+            },
+            {
+              "name": "company_id_input",
+              "value": "={{ $json.company_id }}"
+            },
+            {
+              "name": "job_id_input",
+              "value": "={{ $json.job_id }}"
+            },
+            {
+              "name": "match_count",
+              "value": "5"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        672,
+        0
+      ],
+      "id": "88046d9f-337e-4c46-8c72-454c4c4bde34",
+      "name": "KB Results"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get Job Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Search Query": {
+      "main": [
+        [
+          {
+            "node": "KB Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Job Details": {
+      "main": [
+        [
+          {
+            "node": "Build Search Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Context": {
+      "main": [
+        [
+          {
+            "node": "trigger WF4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "KB Results": {
+      "main": [
+        [
+          {
+            "node": "Format Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "YOUR_ERROR_WORKFLOW_ID",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "2c0f4462-8c7a-4bf0-9528-c45e52139301",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "YOUR_N8N_INSTANCE_ID"
+  },
+  "nodeGroups": [],
+  "id": "rlTqnDJU36TDAPtp",
+  "tags": []
+}
