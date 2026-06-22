@@ -1,36 +1,111 @@
-# n8n-automation
-Business automation workflows built with n8n, AI, Google Workspace, Telegram, and API integrations.
+# n8n Automation Portfolio
+
+A collection of AI-powered business automation workflows built with n8n, LLMs, cloud databases, and third-party integrations. These projects focus on reducing manual work, improving operational efficiency, and demonstrating production-oriented automation architecture.
 
 ## Projects
 
+### AI Recruitment Intelligence Platform
+
+AI-powered recruitment screening system that automates candidate intake, resume analysis, and recruiter-ready evaluations.
+
+#### Features
+
+* Candidate application portal with resume upload
+* Automated resume parsing using AI
+* RAG-powered hiring knowledge base
+* AI candidate screening and evaluation
+* Weighted candidate scoring (0–100)
+* Recruiter summary generation
+* Automated email notifications
+* Candidate pipeline management
+* Error monitoring and alerting
+* Supabase database and storage integration
+
+#### Tech Stack
+
+* n8n
+* Supabase
+* Groq API
+* pgvector
+* Gmail API
+* HTML/CSS/JavaScript
+
+---
+
 ### AI YouTube Shorts Automation
-- Video transcription
-- AI content generation
-- Telegram approval workflow
-- YouTube upload automation
+
+An automated content pipeline that transforms long-form content into short-form videos ready for review and publishing.
+
+#### Features
+
+* Video transcription
+* AI-generated content creation
+* Automated script generation
+* Telegram approval workflow
+* YouTube upload automation
+
+#### Tech Stack
+
+* n8n
+* OpenAI
+* Telegram
+* YouTube API
+
+---
 
 ### AI Signage Quotation Automation
-- Lead processing
-- AI project analysis
-- Cost estimation
-- Automated quotation generation
-- Gmail delivery
 
-### AI Automated Recruitment System
-- Applicant form intake and validation
-- Resume parsing and scoring using AI
-- Automated qualification decision (qualified / not qualified)
-- Email automation for rejection and interview invitation
-- Airtable / database logging and tracking
-- Recruiter notification via Gmail
-  
+A workflow that automates lead intake, project analysis, quotation generation, and client communication.
+
+#### Features
+
+* Lead capture and processing
+* AI-assisted project analysis
+* Automated cost estimation
+* Quotation generation
+* Gmail delivery workflow
+* Activity tracking
+
+#### Tech Stack
+
+* n8n
+* OpenAI
+* Gmail
+* Google Sheets
+
+---
+
 ## Technologies
 
-- n8n
-- OpenAI
-- Groq
-- Google Sheets
-- Airtable
-- Gmail
-- Telegram
-- JavaScript
+### Automation
+
+* n8n
+
+### Artificial Intelligence
+
+* Groq
+* OpenAI
+
+### Databases & Storage
+
+* Supabase
+* Airtable
+* PostgreSQL
+* pgvector
+
+### Integrations
+
+* Gmail API
+* Google Sheets
+* Telegram API
+* REST APIs
+
+### Frontend
+
+* HTML
+* CSS
+* JavaScript
+
+## About
+
+This repository showcases workflow automation, AI agent orchestration, database integration, and business process automation projects built for real-world use cases and portfolio demonstration purposes.
