@@ -1,4 +1,3 @@
-
 CREATE EXTENSION IF NOT EXISTS vector;
 CREATE TABLE companies (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
