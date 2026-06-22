@@ -1,0 +1,398 @@
+{
+  "name": "WF4 AI Screening Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "wf4-AI-screening-agent",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        48,
+        -192
+      ],
+      "id": "f448049f-1731-4835-9e73-bb6481bc73a9",
+      "name": "Webhook",
+      "webhookId": "YOUR_WEBHOOK_ID"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "candidates",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "keyValue": "={{ $json.body.candidate_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        240,
+        -192
+      ],
+      "id": "90f8060b-eb81-4324-ab26-416d473ce4d8",
+      "name": "Get Candidate Resume",
+      "credentials": {
+        "supabaseApi": {
+          "id": "YOUR_SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const candidate = $input.first().json;\nconst parsed_resume = typeof candidate.parsed_resume === 'string' \n  ? JSON.parse(candidate.parsed_resume) \n  : candidate.parsed_resume;\n\nconst job_title    = $('Webhook').first().json.body.job_title;\nconst requirements = $('Webhook').first().json.body.requirements;\nconst kb_context   = $('Webhook').first().json.body.kb_context;\n\nconst resume_str = JSON.stringify(parsed_resume, null, 2);\nconst job_str = JSON.stringify({\n  title:        job_title,\n  requirements: requirements,\n}, null, 2);\n\nconst raw_prompt = \n  `Evaluate this candidate:\\n\\n` +\n  `RESUME DATA:\\n${resume_str}\\n\\n` +\n  `JOB REQUIREMENTS:\\n${job_str}\\n\\n` +\n  `KNOWLEDGE BASE CONTEXT:\\n${kb_context}\\n\\n` +\n  `Return ONLY valid JSON. No markdown fences.`;\n\nconst user_prompt = raw_prompt\n  .replace(/\\\\n/g, ' ')\n  .replace(/\\\\r/g, ' ')\n  .replace(/\\r\\n/g, ' ')\n  .replace(/[ \\t]+/g, ' ')\n  .trim();\n\nreturn [{\n  json: {\n    candidate_id:   $('Webhook').first().json.body.candidate_id,\n    application_id: $('Webhook').first().json.body.application_id,\n    job_id:         $('Webhook').first().json.body.job_id,\n    user_prompt:    user_prompt,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        64,
+        16
+      ],
+      "id": "7558ad80-65c8-46d0-8eab-2e4f2075f7d7",
+      "name": "Build Screening Prompt"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.user_prompt }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are an objective AI recruitment evaluator for MindMate.\nEvaluate the candidate ONLY against the provided job requirements.\nUse the knowledge base context to calibrate your scoring.\nReturn ONLY valid JSON. No markdown, no explanation, no code fences.\nDo not hallucinate skills or experience not present in the resume.\n\nIMPORTANT RULES:\n- Always generate exactly 2 interview questions based on the job requirements. Never leave interview_questions empty.\n- Always provide at least 1 strength. Look for transferable skills, certifications, or education even if not directly related.\n- Always provide at least 1 weakness.\n- Always provide missing_requirements if the candidate does not meet the job requirements.\n\nReturn exactly this JSON structure:\n{\n  \"score\": 0-100,\n  \"recommendation\": \"Strong Match\" or \"Potential Match\" or \"Needs Review\" or \"Not Qualified\",\n  \"strengths\": [\"at least 1 strength always\"],\n  \"weaknesses\": [\"at least 1 weakness always\"],\n  \"missing_requirements\": [\"string\"],\n  \"risk_flags\": [\"string\"],\n  \"interview_questions\": [\"question 1\", \"question 2\"],\n  \"recruiter_summary\": \"string\"\n}\n\nScoring rules:\n85-100 = Strong Match\n70-84  = Potential Match\n50-69  = Needs Review\n0-49   = Not Qualified"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        240,
+        16
+      ],
+      "id": "c46d5cfd-d72d-469c-98f8-ded13e17dd52",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        368,
+        240
+      ],
+      "id": "a461096d-4fb0-4eb0-88e4-b477375745e6",
+      "name": "AI Screening",
+      "credentials": {
+        "groqApi": {
+          "id": "YOUR_GROQ_CREDENTIAL_ID",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json.text;\n\n// Clean and parse\nconst clean = response\n  .replace(/```json/g, '')\n  .replace(/```/g, '')\n  .replace(/\\\\n/g, ' ')\n  .trim();\n\nlet evaluation;\ntry {\n  evaluation = JSON.parse(clean);\n} catch(e) {\n  throw new Error('Failed to parse AI output: ' + e.message);\n}\n\n// Validate score\nif (typeof evaluation.score !== 'number' || \n    evaluation.score < 0 || evaluation.score > 100) {\n  throw new Error('Invalid score: ' + evaluation.score);\n}\n\n// Validate recommendation\nconst valid_recs = ['Strong Match','Potential Match','Needs Review','Not Qualified'];\nif (!valid_recs.includes(evaluation.recommendation)) {\n  throw new Error('Invalid recommendation: ' + evaluation.recommendation);\n}\n\n// Default empty arrays if missing\nevaluation.strengths            = evaluation.strengths || [];\nevaluation.weaknesses           = evaluation.weaknesses || [];\nevaluation.missing_requirements = evaluation.missing_requirements || [];\nevaluation.risk_flags           = evaluation.risk_flags || [];\nevaluation.interview_questions  = evaluation.interview_questions || [];\n\nreturn [{\n  json: {\n    candidate_id:        $('Build Screening Prompt').first().json.candidate_id,\n    application_id:      $('Build Screening Prompt').first().json.application_id,\n    job_id:              $('Build Screening Prompt').first().json.job_id,\n    score:               evaluation.score,\n    recommendation:      evaluation.recommendation,\n    strengths:           evaluation.strengths,\n    weaknesses:          evaluation.weaknesses,\n    missing_requirements: evaluation.missing_requirements,\n    risk_flags:          evaluation.risk_flags,\n    interview_questions: evaluation.interview_questions,\n    recruiter_summary:   evaluation.recruiter_summary,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        512,
+        -176
+      ],
+      "id": "1c4c28a1-5ca5-4ec3-aa0d-2c5d8c7883de",
+      "name": "Validate AI Output"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "YOUR_WF5_WEBHOOK_URL",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Webhook-Secret",
+              "value": "YOUR_WEBHOOK_SECRET"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "candidate_id",
+              "value": "={{ $('Update Application').item.json.candidate_id }}"
+            },
+            {
+              "name": "application_id",
+              "value": "={{ $json.application_id }}"
+            },
+            {
+              "name": "job_id",
+              "value": "={{ $('Update Application').item.json.job_id }}"
+            },
+            {
+              "name": "score",
+              "value": "={{ $json.final_score }}"
+            },
+            {
+              "name": "recommendation",
+              "value": "={{ $json.recommendation }}"
+            },
+            {
+              "name": "strengths",
+              "value": "={{ $json.strengths }}"
+            },
+            {
+              "name": "weaknesses",
+              "value": "={{ $json.weaknesses }}"
+            },
+            {
+              "name": "missing_requirements",
+              "value": "={{ $json.missing_requirements }}"
+            },
+            {
+              "name": "risk_flags",
+              "value": "={{ $('Update Application').item.json.risk_flags }}"
+            },
+            {
+              "name": "interview_questions",
+              "value": "={{ $('Update Application').item.json.interview_questions }}"
+            },
+            {
+              "name": "recruiter_summary",
+              "value": "={{ $('Validate AI Output').item.json.recruiter_summary }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1056,
+        32
+      ],
+      "id": "2b360f76-cc81-4b3e-ab05-cf692b1773f0",
+      "name": "Trigger WF5"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "applications",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.application_id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "recruiter_summary",
+              "fieldValue": "={{ $json.recruiter_summary }}"
+            },
+            {
+              "fieldId": "interview_questions",
+              "fieldValue": "={{ JSON.stringify($json.interview_questions) }}"
+            },
+            {
+              "fieldId": "risk_flags",
+              "fieldValue": "={{ JSON.stringify($json.risk_flags) }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "screening"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        672,
+        32
+      ],
+      "id": "5248ccec-9a29-4c3b-8ac5-a09603b511b5",
+      "name": "Update Application",
+      "credentials": {
+        "supabaseApi": {
+          "id": "YOUR_SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "scores",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "application_id",
+              "fieldValue": "={{ $('Validate AI Output').item.json.application_id }}"
+            },
+            {
+              "fieldId": "final_score",
+              "fieldValue": "={{ $('Validate AI Output').item.json.score }}"
+            },
+            {
+              "fieldId": "recommendation",
+              "fieldValue": "={{ $('Validate AI Output').item.json.recommendation }}"
+            },
+            {
+              "fieldId": "strengths",
+              "fieldValue": "={{ JSON.stringify($('Validate AI Output').item.json.strengths) }}"
+            },
+            {
+              "fieldId": "weaknesses",
+              "fieldValue": "={{ JSON.stringify($('Validate AI Output').item.json.weaknesses) }}"
+            },
+            {
+              "fieldId": "missing_requirements",
+              "fieldValue": "={{ JSON.stringify($('Validate AI Output').item.json.missing_requirements) }}"
+            },
+            {
+              "fieldId": "model_used",
+              "fieldValue": "llama3-70b-8192"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        864,
+        32
+      ],
+      "id": "82d3f425-5a06-468c-a1b4-9273317fca44",
+      "name": "Insert Score",
+      "credentials": {
+        "supabaseApi": {
+          "id": "YOUR_SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get Candidate Resume",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Candidate Resume": {
+      "main": [
+        [
+          {
+            "node": "Build Screening Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Screening Prompt": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Screening": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Validate AI Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate AI Output": {
+      "main": [
+        [
+          {
+            "node": "Update Application",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Application": {
+      "main": [
+        [
+          {
+            "node": "Insert Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Score": {
+      "main": [
+        [
+          {
+            "node": "Trigger WF5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "YOUR_ERROR_WORKFLOW_ID",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "807bfbfb-9326-4b49-9871-d8c00eeb3c2c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "YOUR_N8N_INSTANCE_ID"
+  },
+  "nodeGroups": [],
+  "id": "YOUR_WORKFLOW_ID",
+  "tags": []
+}

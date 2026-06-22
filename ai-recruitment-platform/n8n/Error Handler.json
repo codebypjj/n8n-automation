@@ -1,0 +1,113 @@
+{
+  "name": "Error Handler",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "1753ccc2-93ca-499c-bf17-7fcf0475ca55",
+      "name": "Error Trigger"
+    },
+    {
+      "parameters": {
+        "tableId": "agent_logs",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "workflow_name",
+              "fieldValue": "={{ $json.workflow.name }}"
+            },
+            {
+              "fieldId": "model",
+              "fieldValue": "system"
+            },
+            {
+              "fieldId": "error",
+              "fieldValue": "={{ $json.execution.error.message }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "bfea264a-9815-42e2-a827-48831e1fb6dd",
+      "name": "Log Error",
+      "credentials": {
+        "supabaseApi": {
+          "id": "CLIENT_SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "admin@clientcompany.com",
+        "subject": "=⚠️ MindMate Error — {{ $('Error Trigger').item.json.workflow.name }}",
+        "message": "=An error occurred in MindMate! \n\nWorkflow: {{ $json.workflow_name }} \nError: {{ $json.error }} \nLast node: {{ $('Error Trigger').item.json.execution.lastNodeExecuted }} \nTime: {{ new Date().toISOString() }} \n\nPlease check n8n for details. \n\nMindMate System",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "055ab3ba-b6a5-4ff6-88a1-9430bff47ffd",
+      "name": "Send Admin Alert",
+      "webhookId": "f670ffd5-b6b9-4d34-b7e1-578a9b4e52d6",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "CLIENT_GMAIL_CREDENTIAL_ID",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Log Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Error": {
+      "main": [
+        [
+          {
+            "node": "Send Admin Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "3f99c956-2a89-4c88-83b2-1529b3d877b0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "586128f554e087bfd0d3b2c7ad371fb8dd9072d710b8cf2a3dab5c13d6b54258"
+  },
+  "nodeGroups": [],
+  "id": "IaO21etUMZsGv54V",
+  "tags": []
+}

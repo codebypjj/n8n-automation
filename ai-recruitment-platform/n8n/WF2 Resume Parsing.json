@@ -1,0 +1,372 @@
+{
+  "name": "WF2 Resume Parsing",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "wf2-resume-parsing",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        32,
+        -192
+      ],
+      "id": "e9ed6ddb-610c-4412-af8f-a7f31ee8b963",
+      "name": "Webhook",
+      "webhookId": "26d1ff33-efaf-4e39-9079-783392ad4a40",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YOUR_HEADER_AUTH_CREDENTIAL",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Extract structured data from this resume and return ONLY valid JSON:\n\n{{ $('Clean Text').first().json.raw_text }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are a resume parser. Return ONLY valid JSON, no markdown, no explanation. \n{   \n\"full_name\": \"string\",   \n\"email\": \"string or null\",  \n\"phone\": \"string or null\",   \n\"location\": \"string or null\",   \n\"skills\": [\"string\"],   \n\"years_experience\": \"number or null\",   \n\"work_experience\": [{\"company\":\"string\",\"title\":\"string\",\"start_date\":\"string\",\"end_date\":\"string\"}],   \"education\": [{\"institution\":\"string\",\"degree\":\"string\",\"field\":\"string or null\",\"graduation_year\":\"number or null\"}],   \"certifications\": [{\"name\":\"string\",\"issuer\":\"string or null\"}],   \"languages\": [{\"language\":\"string\",\"proficiency\":\"string or null\"}] \n}"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        208,
+        32
+      ],
+      "id": "a4052df1-d8e5-43ef-b62d-d6c86bd65062",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://your-n8n-instance.com/webhook-test/wf3-kb-retrieval",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Webhook-Secret",
+              "value": "YOUR_WEBHOOK_SECRET"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "candidate_id",
+              "value": "={{ $json.candidate_id }}"
+            },
+            {
+              "name": "application_id",
+              "value": "={{ $('Validate JSON').item.json.application_id }}"
+            },
+            {
+              "name": "job_id",
+              "value": "={{ $('Validate JSON').item.json.job_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1280,
+        -64
+      ],
+      "id": "08a1ffe0-5d75-442c-8400-3f9d5c12734e",
+      "name": "Trigger WF3"
+    },
+    {
+      "parameters": {
+        "url": "=https://your-project.supabase.co/storage/v1/object/authenticated/resumes/{{ $json.body.resume_storage_path }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwYmdoY3hqY2h4bGZ3bHRhYmZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTM0MDIyNiwiZXhwIjoyMDk2OTE2MjI2fQ.YOUR_SUPABASE_SERVICE_ROLE_KEY"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        256,
+        -192
+      ],
+      "id": "75cf2f23-1aeb-48f7-bb30-85ac96bfe712",
+      "name": "Fetch PDF"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawText = $input.first().json.text\n  .replace(/\\x00/g, '')\n  .replace(/[ \\t]+/g, ' ')\n  .replace(/\\n{3,}/g, '\\n\\n')\n  .slice(0, 12000);\n\nreturn [{\n  json: {\n    candidate_id:   $('Webhook').first().json.body.candidate_id,\n    application_id: $('Webhook').first().json.body.application_id,\n    job_id:         $('Webhook').first().json.body.job_id,\n    raw_text:       rawText,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        32,
+        32
+      ],
+      "id": "d8e52247-8194-4e43-adbb-3474dac27daa",
+      "name": "Clean Text"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json.text;\n\n// Remove markdown fences if present\nconst clean = response\n  .replace(/```json/g, '')\n  .replace(/```/g, '')\n  .replace(/\\\\n/g, ' ')\n  .trim();\n\n// Parse JSON\nlet parsed;\ntry {\n  parsed = JSON.parse(clean);\n} catch(e) {\n  throw new Error('Failed to parse Groq response: ' + e.message);\n}\n\n// Validate required field\nif (!parsed.full_name) throw new Error('full_name missing');\n\n// Deduplicate and clean skills\nif (parsed.skills) {\n  parsed.skills = [...new Set(\n    parsed.skills.map(s => s.toLowerCase().trim())\n  )];\n}\n\nreturn [{\n  json: {\n    candidate_id:   $('Webhook').first().json.body.candidate_id,\n    application_id: $('Webhook').first().json.body.application_id,\n    job_id:         $('Webhook').first().json.body.job_id,\n    parsed_resume:  parsed,\n    raw_text:       $('Clean Text').first().json.raw_text,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        704,
+        -64
+      ],
+      "id": "02c256c4-20b6-4d0d-8531-98c86cc99f9d",
+      "name": "Validate JSON"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "candidates",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.candidate_id.trim() }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "parsed_resume",
+              "fieldValue": "={{ $json.parsed_resume }}"
+            },
+            {
+              "fieldId": "raw_resume_text",
+              "fieldValue": "={{ $json.raw_text }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        896,
+        -64
+      ],
+      "id": "4e420ed2-261f-4647-898a-43965326ff1e",
+      "name": "Update Candidate",
+      "credentials": {
+        "supabaseApi": {
+          "id": "YOUR_SUPABASE_CREDENTIAL",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "applications",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $('Validate JSON').item.json.application_id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status",
+              "fieldValue": "parsed"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1088,
+        -64
+      ],
+      "id": "fd8b8b0a-5542-4287-b481-6eb915ddc3e7",
+      "name": "Update Application",
+      "credentials": {
+        "supabaseApi": {
+          "id": "YOUR_SUPABASE_CREDENTIAL",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        288,
+        272
+      ],
+      "id": "558d874d-c011-4fdc-8c9d-676d01de0c99",
+      "name": "AI Resume Parser",
+      "credentials": {
+        "groqApi": {
+          "id": "YOUR_GROQ_CREDENTIAL",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        -192
+      ],
+      "id": "eb018846-ee50-4702-b238-fb086e4cef08",
+      "name": "Extract PDF"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Fetch PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Validate JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch PDF": {
+      "main": [
+        [
+          {
+            "node": "Extract PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean Text": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate JSON": {
+      "main": [
+        [
+          {
+            "node": "Update Candidate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Candidate": {
+      "main": [
+        [
+          {
+            "node": "Update Application",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Application": {
+      "main": [
+        [
+          {
+            "node": "Trigger WF3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Resume Parser": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract PDF": {
+      "main": [
+        [
+          {
+            "node": "Clean Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "ERROR_WORKFLOW_ID",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "df52f60f-cca9-48f7-b45b-19adec0c9746",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "INSTANCE_ID"
+  },
+  "nodeGroups": [],
+  "id": "LtIaUBTx8V3MlAKg",
+  "tags": []
+}
