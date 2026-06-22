@@ -1,14 +1,3 @@
--- ============================================================
--- MindMate Knowledge Base Seed Data
--- Run this in Supabase SQL Editor
--- ============================================================
-
--- Get job IDs first for reference
--- SELECT id, title FROM jobs;
-
--- ============================================================
--- SENIOR BACKEND ENGINEER
--- ============================================================
 INSERT INTO knowledge_base (company_id, job_id, category, title, content)
 SELECT 
   '6792585f-94be-4b5b-a6e4-9bc9296e796e',
