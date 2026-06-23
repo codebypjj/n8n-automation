@@ -1,0 +1,714 @@
+{
+  "name": "AI-Powered Quotation Automation System",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "get-quotation",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        -304
+      ],
+      "id": "e4e88928-5955-4bd1-b7a1-fe78ef3b6c09",
+      "name": "Webhook",
+      "webhookId": "dadede6d-c950-4413-9568-da948759c3b3"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e701f269-5c52-41da-bdfc-f3a143b90378",
+              "name": "fullName",
+              "value": "={{ $json.body['Full Name'] }}",
+              "type": "string"
+            },
+            {
+              "id": "6d114671-908a-4fd0-a069-bb31d67ba7de",
+              "name": "companyName",
+              "value": "={{ $json.body['Company Name'] }}",
+              "type": "string"
+            },
+            {
+              "id": "2b04f10a-1343-47f5-99c8-3e768a21cf87",
+              "name": "email",
+              "value": "={{ $json.body['Email Address'] }}",
+              "type": "string"
+            },
+            {
+              "id": "57cb456d-5524-4107-a0c0-92c7ff224427",
+              "name": "phone",
+              "value": "={{ $json.body['Phone Number'] }}",
+              "type": "string"
+            },
+            {
+              "id": "2ff1acee-b5b6-47b1-bfeb-ca4644ba69cb",
+              "name": "serviceRequired",
+              "value": "={{ $json.body['Service Required'] }}",
+              "type": "string"
+            },
+            {
+              "id": "ca9f30db-7daa-4a57-a86c-92032716e565",
+              "name": "projectDescription",
+              "value": "={{ $json.body['Project Description'] }}",
+              "type": "string"
+            },
+            {
+              "id": "1d9aea99-ab96-42af-b70c-2a8ab54ca7b4",
+              "name": "budgetRange",
+              "value": "={{ $json.body['Budget Range'] }}",
+              "type": "string"
+            },
+            {
+              "id": "73273a95-1e64-46fd-a4b2-860fc52b9d7e",
+              "name": "preferredTime",
+              "value": "={{ $json.body['Preferred Timeline'] }}",
+              "type": "string"
+            },
+            {
+              "id": "2b7e71e9-d455-43b8-ae2b-b42f7a886c41",
+              "name": "submittedAt",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "6ae3adf7-2be2-4e0c-9ff8-6f53c27af971",
+              "name": "inquiryId",
+              "value": "={{ 'QT-' + $now.format('YYYY') + '-' + $now.toMillis().toString().slice(-5) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        176,
+        -304
+      ],
+      "id": "d7ed2df5-dbc3-4498-aabc-2113e45caf48",
+      "name": "Data Normalization"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f848a290-987f-4f02-b78a-a1d1ad0c616b",
+              "leftValue": "email",
+              "rightValue": "={{ $json.email }}",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              }
+            },
+            {
+              "id": "fad8a779-a86f-40b7-a21e-7a83ae3e44b6",
+              "leftValue": "={{ $json.fullName }}",
+              "rightValue": "Name",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "66954a82-cbf8-4dbc-b613-bc2386765b16",
+              "leftValue": "={{ $json.projectDescription.length }}",
+              "rightValue": 20,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        352,
+        -192
+      ],
+      "id": "14bf4fe5-92aa-4df5-a7ba-d04040df1711",
+      "name": "Input Validation"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=New quotation request received. Here are the customer details:\n\nName: {{ $json.fullName }}\nCompany: {{ $json.companyName }}\nEmail: {{ $json.email }}\nPhone: {{ $json.phone }}\nService Requested: {{ $json.serviceRequired }}\nBudget Range: {{ $json.budgetRange }}\nPreferred Timeline: {{ $json.preferredTime }}\n\nProject Description:\n{{ $json.projectDescription }}\n\nSubmitted at: {{ $json.submittedAt }}",
+        "options": {
+          "systemMessage": "=You are a professional quotation specialist for [Business Name], a [industry] company based in [location].\n\nYour job is to analyze incoming customer project inquiries and generate accurate, professional quotation drafts based on the company's services, pricing, and policies.\n\nINSTRUCTIONS:\n1. First, call the getBusinessKnowledge tool to retrieve the company's services, pricing, and policies.\n2. Analyze the customer's project description carefully.\n3. Match their requirements to the most appropriate services from the knowledge base.\n4. Estimate a realistic price range based on the complexity and scope described.\n5. Identify any missing information that would be needed to finalize the quotation.\n6. Generate a professional, friendly quotation draft.\n\nTONE:\n- Professional but warm\n- Clear and confident\n- Avoid overpromising — use ranges, not fixed prices\n- Always note that the final price is subject to confirmation after a discovery call\n\nOUTPUT FORMAT:\nReturn your response ONLY as a valid JSON object with no markdown formatting, no preamble, no explanation outside the JSON. Use this exact structure:\n\n{\n  \"projectSummary\": \"2-3 sentence plain English summary of what the client needs\",\n  \"complexityLevel\": \"Low | Medium | High\",\n  \"estimatedPriceRange\": \"₱X,XXX – ₱XX,XXX\",\n  \"estimatedDuration\": \"X to X weeks\",\n  \"recommendedDeliverables\": \"Bullet list of what will be delivered\",\n  \"missingInformation\": \"Any information missing that is needed for a more accurate quote, or 'None — sufficient information provided'\",\n  \"quotationDraft\": \"A multi-line professional quotation text ready to be emailed to the customer\"\n}\n\nIMPORTANT:\n- Never invent services the company does not offer.\n- If the request is outside the company's scope, note it clearly in the quotationDraft.\n- Always base pricing on the knowledge base, not general assumptions.\n- Be honest if more information is needed before a firm price can be given."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        560,
+        -288
+      ],
+      "id": "967c0e90-b084-4530-81e3-b84a2090b8ac",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        560,
+        -16
+      ],
+      "id": "b13e1127-52c4-464b-b2af-f9dd9876227d",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "XG1jlYZWYGHMk3Be",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.output;\nconst cleaned = raw.replace(/```json|```/g, '').trim();\nconst parsed = JSON.parse(cleaned);\nreturn [{ json: parsed }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        -192
+      ],
+      "id": "f92065de-a22a-45bb-a357-59e63416d947",
+      "name": "Parse JSON Output"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "Quotation CRM",
+          "cachedResultUrl": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Inquiry ID": "={{ $('Data Normalization').item.json.inquiryId }}",
+            "Date Submitted": "={{ $('Data Normalization').item.json.submittedAt }}",
+            "Full Name": "={{ $('Data Normalization').item.json.fullName }}",
+            "Company Name": "={{ $('Data Normalization').item.json.companyName }}",
+            "Email Address": "={{ $('Data Normalization').item.json.email }}",
+            "Phone Number": "={{ $('Data Normalization').item.json.phone }}",
+            "Service Requested": "={{ $('Data Normalization').item.json.serviceRequired }}",
+            "Budget Range": "={{ $('Data Normalization').item.json.budgetRange }}",
+            "Preferred Timeline": "={{ $('Data Normalization').item.json.preferredTime }}",
+            "Project Description": "={{ $('Data Normalization').item.json.projectDescription }}",
+            "AI Project Summary": "={{ $json.projectSummary }}",
+            "Estimated Summary": "={{ $json.estimatedPriceRange }}",
+            "Estimated Duration": "={{ $json.estimatedDuration }}",
+            "Complexity Level": "={{ $json.complexityLevel }}",
+            "Missing Information": "={{ $json.missingInformation }}",
+            "Status": "Pending"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Inquiry ID",
+              "displayName": "Inquiry ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date Submitted",
+              "displayName": "Date Submitted",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Full Name",
+              "displayName": "Full Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company Name",
+              "displayName": "Company Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email Address",
+              "displayName": "Email Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone Number",
+              "displayName": "Phone Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Service Requested",
+              "displayName": "Service Requested",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Budget Range",
+              "displayName": "Budget Range",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Preferred Timeline",
+              "displayName": "Preferred Timeline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Project Description",
+              "displayName": "Project Description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "AI Project Summary",
+              "displayName": "AI Project Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Estimated Summary",
+              "displayName": "Estimated Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Estimated Duration",
+              "displayName": "Estimated Duration",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Complexity Level",
+              "displayName": "Complexity Level",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Missing Information",
+              "displayName": "Missing Information",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Notes",
+              "displayName": "Notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1072,
+        -192
+      ],
+      "id": "9f354729-72b5-4537-b843-6ff8846d9129",
+      "name": "Google Sheets CRM",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "o967ZBLU8xUAKZU8",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Data Normalization').item.json.email }}",
+        "subject": "=Your Quotation Request — {{ $json['Inquiry ID'] }} {{ $json['Service Requested'] }}",
+        "message": "=<!DOCTYPE html>\n<html>\n<body style=\"font-family: Arial, sans-serif; max-width: 650px; margin: auto; color: #333;\">\n\n  <div style=\"background: #1a73e8; padding: 24px; text-align: center;\">\n    <h1 style=\"color: white; margin: 0;\">Your Business Name</h1>\n    <p style=\"color: #cce5ff; margin: 4px 0;\">Quotation Reference: {{ $json['Inquiry ID'] }}</p>\n  </div>\n\n  <div style=\"padding: 32px 24px;\">\n    <p>Hi <strong>{{ $json['Full Name'] }}</strong>,</p>\n\n    <p>Thank you for reaching out! We've received your project inquiry and our team has reviewed your requirements. Below is a preliminary quotation based on the information you provided.</p>\n\n    <hr style=\"border: none; border-top: 1px solid #eee; margin: 24px 0;\">\n\n    <h2 style=\"color: #1a73e8;\">📋 Project Summary</h2>\n    <p>{{ $json['AI Project Summary'] }}</p>\n\n    <h2 style=\"color: #1a73e8;\">📦 Recommended Deliverables</h2>\n    <p>{{ $('Parse JSON Output').item.json.recommendedDeliverables }}</p>\n\n    <h2 style=\"color: #1a73e8;\">💰 Estimated Investment</h2>\n    <p style=\"font-size: 18px; font-weight: bold; color: #333;\">{{ $('Parse JSON Output').item.json.estimatedPriceRange }}</p>\n    <p><em>Note: This is a preliminary estimate. Final pricing will be confirmed after a detailed project discussion.</em></p>\n\n    <h2 style=\"color: #1a73e8;\">⏱ Estimated Timeline</h2>\n    <p>{{ $('Parse JSON Output').item.json.estimatedDuration }}</p>\n\n    <hr style=\"border: none; border-top: 1px solid #eee; margin: 24px 0;\">\n\n    <h2 style=\"color: #1a73e8;\">📝 Quotation Details</h2>\n    <div style=\"background: #f8f9fa; padding: 20px; border-radius: 8px; white-space: pre-line;\">{{ $('Parse JSON Output').item.json.quotationDraft }}</div>\n\n    <hr style=\"border: none; border-top: 1px solid #eee; margin: 24px 0;\">\n\n    <h2 style=\"color: #1a73e8;\">✅ Next Steps</h2>\n    <ol>\n      <li>Review this preliminary quotation</li>\n      <li>Reply to this email with any questions or clarifications</li>\n      <li>Schedule a free consultation call with our team</li>\n      <li>We'll send you a formal, finalized proposal</li>\n    </ol>\n\n    <div style=\"background: #e8f0fe; padding: 16px; border-radius: 8px; margin-top: 24px;\">\n      <p style=\"margin: 0;\"><strong>Ready to proceed?</strong> Simply reply to this email or call us at <strong>+63 XXX XXX XXXX</strong>. We'd love to work with you!</p>\n    </div>\n\n    <p style=\"margin-top: 32px;\">Warm regards,<br>\n    <strong>Your Name</strong><br>\n    Your Business Name<br>\n    your@email.com | +63 XXX XXX XXXX</p>\n  </div>\n\n  <div style=\"background: #f1f3f4; padding: 16px; text-align: center; font-size: 12px; color: #777;\">\n    <p>This is an automated quotation estimate. All prices and timelines are subject to confirmation.</p>\n    <p>© 2024 Your Business Name. All rights reserved.</p>\n  </div>\n\n</body>\n</html>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1248,
+        -192
+      ],
+      "id": "ab54e007-34e5-461b-b78c-9bfdb0019076",
+      "name": "Email to Customer",
+      "webhookId": "b9868c12-2ba4-48d9-a061-e070c88fa836",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_GMAIL_CREDENTIAL_ID",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_CHAT_ID",
+        "text": "=🆕 New Quotation Request!\n\n🔖 ID: {{ $('Google Sheets CRM').item.json['Inquiry ID'] }}\n👤 Name: {{ $('Google Sheets CRM').item.json['Full Name'] }}\n🏢 Company: {{ $('Google Sheets CRM').item.json['Company Name'] }}\n📧 Email: {{ $('Google Sheets CRM').item.json['Email Address'] }}\n🔧 Service: {{ $('Google Sheets CRM').item.json['Service Requested'] }}\n💰 Budget: {{ $('Google Sheets CRM').item.json['Budget Range'] }}\n📊 Complexity: {{ $('Google Sheets CRM').item.json['Complexity Level'] }}\n💵 Est. Price: {{ $('Google Sheets CRM').item.json['Estimated Summary'] }}\n⏱ Est. Duration: {{ $('Google Sheets CRM').item.json['Estimated Duration'] }}\n\nCheck your CRM for full details.",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1424,
+        -192
+      ],
+      "id": "7d8b93f7-9353-45e9-9d7a-8ce5b28edd62",
+      "name": "Send a text message",
+      "webhookId": "02d312ca-3572-4425-961a-d8a021b1639f",
+      "credentials": {
+        "telegramApi": {
+          "id": "YOUR_TELEGRAM_CREDENTIAL_ID",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Returns company services, pricing, FAQs, and policies. Always call this before generating a quotation.",
+        "operation": "get",
+        "documentURL": "YOUR_GOOGLE_DOC_URL?tab=t.0#heading=h.o8i77pdln3wy"
+      },
+      "type": "n8n-nodes-base.googleDocsTool",
+      "typeVersion": 2,
+      "position": [
+        704,
+        -48
+      ],
+      "id": "23ba6c5b-f296-42b0-901d-b3df829cacce",
+      "name": "getBusinessKnowledge",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "YOUR_GOOGLE_DOCS_CREDENTIAL_ID",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Data Normalization').item.json.email }}",
+        "subject": "We received your inquiry but need a bit more information",
+        "emailType": "text",
+        "message": "=Dear Customer,\n\nThank you for reaching out to us.\n\nWe reviewed your submission and noticed that some required information was missing, which prevents us from processing your request at this time.\n\nOnce we receive the updated submission, we will review it promptly and continue with the next steps.\n\nIf you have any questions or need assistance completing the form, please feel free to reply to this email.\n\nThank you for your cooperation, and we look forward to assisting you.\n\nKind regards,\nSupport Team",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        560,
+        144
+      ],
+      "id": "02174ff8-64db-4997-8c06-e8f8d82b3f88",
+      "name": "Error Notification",
+      "webhookId": "ab1bb40c-1117-4640-9ae3-4cbf3664f228",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_GMAIL_CREDENTIAL_ID",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "list",
+          "cachedResultName": "Quotation CRM",
+          "cachedResultUrl": "YOUR_GOOGLE_SHEET_URL"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1653757013,
+          "mode": "list",
+          "cachedResultName": "Error Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID/edit#gid=1653757013"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Email": "={{ $('Data Normalization').item.json.email }}",
+            "Timestamp": "={{ $now.toISO() }}",
+            "Error Reason": "={{ \n$('Input Validation').item.json.fullName.length < 2 ? 'Missing full name' : \n!$('Input Validation').item.json.email.includes('@') ? 'Invalid email' : \n$('Input Validation').item.json.projectDescription.length < 20 ? 'Description too short' : \n$('Input Validation').item.json.phone.length < 7 ? 'Missing phone number' : \n!$('Input Validation').item.json.serviceRequired ? 'No service selected' : \n'Unknown validation error'\n}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Error Reason",
+              "displayName": "Error Reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        720,
+        144
+      ],
+      "id": "cc2f3caf-9870-447d-91c5-e91851a8d616",
+      "name": "Error Log",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "o967ZBLU8xUAKZU8",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Data Normalization",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Normalization": {
+      "main": [
+        [
+          {
+            "node": "Input Validation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Input Validation": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse JSON Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse JSON Output": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets CRM": {
+      "main": [
+        [
+          {
+            "node": "Email to Customer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email to Customer": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "getBusinessKnowledge": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Notification": {
+      "main": [
+        [
+          {
+            "node": "Error Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "3072773a-1df7-4fdd-86ca-28c3e0f37d69",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "49ba5e9abfb58bb293f4f63d7941e963473b9d9547b7fbb9dbe7368c53704dc8"
+  },
+  "nodeGroups": [],
+  "id": "dfj80jLs79fEZIjw",
+  "tags": []
+}

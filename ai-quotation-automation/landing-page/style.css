@@ -1,0 +1,256 @@
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        font-family: Arial, sans-serif;
+        color: #333;
+    }
+
+    /* ── NAV ── */
+    nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 18px 60px;
+        background: #fff;
+        border-bottom: 1px solid #eee;
+        position: sticky;
+        top: 0;
+        z-index: 99;
+    }
+
+    .logo {
+        font-size: 22px;
+        font-weight: bold;
+        color: #1a73e8;
+    }
+
+    .nav-links {
+        display: flex;
+        gap: 32px;
+        list-style: none;
+    }
+
+    .nav-links a {
+        text-decoration: none;
+        color: #555;
+        font-size: 15px;
+    }
+
+    .nav-links a:hover {
+        color: #1a73e8;
+    }
+
+    .nav-cta {
+        background: #1a73e8;
+        color: white !important;
+        padding: 9px 22px;
+        border-radius: 6px;
+        font-weight: bold;
+    }
+
+    .nav-cta:hover {
+        background: #1558b0;
+        color: white !important;
+    }
+
+    /* ── HERO ── */
+    .hero {
+        background: linear-gradient(135deg, #1a73e8, #0d47a1);
+        color: white;
+        text-align: center;
+        padding: 100px 20px;
+    }
+
+    .hero h1 {
+        font-size: 48px;
+        margin-bottom: 18px;
+        line-height: 1.2;
+    }
+
+    .hero p {
+        font-size: 18px;
+        opacity: 0.88;
+        max-width: 520px;
+        margin: 0 auto 36px;
+        line-height: 1.7;
+    }
+
+    .btn-quote {
+        display: inline-block;
+        background: #fff;
+        color: #1a73e8;
+        font-size: 17px;
+        font-weight: bold;
+        padding: 16px 40px;
+        border-radius: 8px;
+        text-decoration: none;
+        transition: transform 0.15s, box-shadow 0.15s;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-quote:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    }
+
+    .hero-note {
+        margin-top: 16px;
+        font-size: 13px;
+        opacity: 0.7;
+    }
+
+    /* ── SERVICES ── */
+    .section {
+        padding: 80px 60px;
+        text-align: center;
+    }
+
+    .section h2 {
+        font-size: 32px;
+        margin-bottom: 10px;
+        color: #1a1a1a;
+    }
+
+    .section .sub {
+        color: #777;
+        font-size: 15px;
+        margin-bottom: 48px;
+    }
+
+    .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 24px;
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+
+    .card {
+        background: #fff;
+        border: 1px solid #eee;
+        border-radius: 12px;
+        padding: 28px 20px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s;
+    }
+
+    .card:hover {
+        transform: translateY(-4px);
+    }
+
+    .card .icon {
+        font-size: 36px;
+        margin-bottom: 12px;
+    }
+
+    .card h3 {
+        font-size: 16px;
+        margin-bottom: 8px;
+    }
+
+    .card p {
+        font-size: 13px;
+        color: #777;
+        line-height: 1.6;
+    }
+
+    /* ── WHY US ── */
+    .why {
+        background: #f4f6f9;
+    }
+
+    .why-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 32px;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .why-item {
+        text-align: center;
+    }
+
+    .why-item .big {
+        font-size: 40px;
+        font-weight: bold;
+        color: #1a73e8;
+    }
+
+    .why-item p {
+        font-size: 14px;
+        color: #666;
+        margin-top: 6px;
+    }
+
+    /* ── CTA BANNER ── */
+    .cta-banner {
+        background: #1a73e8;
+        color: white;
+        text-align: center;
+        padding: 70px 20px;
+    }
+
+    .cta-banner h2 {
+        font-size: 32px;
+        margin-bottom: 12px;
+    }
+
+    .cta-banner p {
+        opacity: 0.85;
+        font-size: 16px;
+        margin-bottom: 32px;
+    }
+
+    .btn-quote-white {
+        display: inline-block;
+        background: white;
+        color: #1a73e8;
+        font-size: 16px;
+        font-weight: bold;
+        padding: 14px 36px;
+        border-radius: 8px;
+        text-decoration: none;
+        transition: transform 0.15s;
+    }
+
+    .btn-quote-white:hover {
+        transform: translateY(-2px);
+    }
+
+    /* ── FOOTER ── */
+    footer {
+        background: #1a1a1a;
+        color: #aaa;
+        text-align: center;
+        padding: 28px;
+        font-size: 13px;
+    }
+
+    footer span {
+        color: #fff;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 640px) {
+        nav {
+            padding: 16px 20px;
+        }
+
+        .nav-links {
+            display: none;
+        }
+
+        .hero h1 {
+            font-size: 32px;
+        }
+
+        .section {
+            padding: 60px 20px;
+        }
+    }
