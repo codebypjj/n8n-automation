@@ -1,6 +1,6 @@
 # AI-Powered Quotation Automation System
 
-> A no-code quotation automation workflow built with n8n that automatically generates and sends a professional quotation email the moment a customer submits a project inquiry — no manual work required.
+A no-code quotation automation workflow built with n8n that automatically generates and sends a professional quotation email the moment a customer submits a project inquiry — no manual work required.
 
 ---
 
