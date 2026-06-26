@@ -1,0 +1,1022 @@
+{
+  "name": "Customer Support System",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "labelIds": [
+            "INBOX",
+            "UNREAD"
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -144,
+        16
+      ],
+      "id": "1e969b47-72bc-418f-b79f-d04b1d7eada7",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_GMAIL_ID",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=From: {{ $json.customerName }}\nEmail: {{ $json.customerEmail }}\nSubject: {{ $json.Subject }}\nMessage: {{ $json.messageBody }}",
+        "options": {
+          "systemMessage": "=You are a professional customer support AI for SpeedNet Internet Services.\n\nLANGUAGE DETECTION RULES:\n- Detect language based on the written words and grammar ONLY.\n- Never detect language based on names, addresses, or proper nouns.\n- If the message is written in English, respond in English.\n- If the message is written in Filipino/Tagalog, respond in Filipino.\n- If the message is written in Arabic, respond in Modern Standard Arabic.\n- If the message is written in Spanish, respond in Spanish.\n- If mixed languages, use the most frequently used language.\n\nKNOWLEDGE BASE RULES:\n- ALWAYS consult the Google Doc knowledge base first.\n- Use ONLY information found in the knowledge base.\n- Never invent policies, pricing, plans, or procedures.\n- For account specific information, always ask for Full Name, Account Number, and Registered Phone Number first.\n- Never confirm account details without verification.\n\nPRIORITY RULES:\n- High: total outage, no internet 24hrs+, router blinking red, area-wide outage\n- Medium: slow internet, intermittent connection, billing dispute, installation delay\n- Low: general inquiry, plan upgrade/downgrade, payment question, WiFi password\n\nOUTPUT RULES:\n- Output ONLY valid JSON, no markdown, no extra text.\n- issue_summary: always in English, always.\n- draft_reply: always in the customer's detected language.\n- detected_language: must match the language of draft_reply.\n\nRequired format:\n{\"issue_summary\": \"English summary here\", \"priority\": \"High | Medium | Low\", \"draft_reply\": \"reply in customer language\", \"detected_language\": \"detected language\"}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        304,
+        -96
+      ],
+      "id": "0715e5e1-509d-458d-8e1c-2ea9ee14ef2c",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json.output;\nconst cleaned = raw.replace(/```json|```/g, \"\").trim();\nconst parsed = JSON.parse(cleaned);\nreturn [{ json: {\n  issue_summary: parsed.issue_summary,\n  priority: parsed.priority,\n  draft_reply: parsed.draft_reply,\n  detected_language: parsed.detected_language,\n  customerName: $('extract fields').first().json.customerName,\n  customerEmail: $('extract fields').first().json.customerEmail,\n  subject: $('extract fields').first().json.Subject\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        16
+      ],
+      "id": "e0184f3f-13e0-4ae3-bb2c-0ea49c9c06bf",
+      "name": "parse response"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "YOUR_AIRTABLE_BASE_ID",
+          "mode": "list",
+          "cachedResultName": "Email Support System",
+          "cachedResultUrl": "https://airtable.com/YOUR_AIRTABLE_BASE_ID"
+        },
+        "table": {
+          "__rl": true,
+          "value": "YOUR_AIRTABLE_TABLE_ID",
+          "mode": "list",
+          "cachedResultName": "Tickets",
+          "cachedResultUrl": "https://airtable.com/YOUR_AIRTABLE_BASE_ID/YOUR_AIRTABLE_TABLE_ID"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Customer Name": "={{ $json.customerName }}",
+            "Customer Email": "={{ $json.customerEmail }}",
+            "Issue Summary": "={{ $('AI Agent').item.json.output }}",
+            "Status": "Pending Review",
+            "AI Draft Reply": "={{ $json.draft_reply }}",
+            "Priority": "={{ $json.priority }}",
+            "Timestamp": "={{ $('extract fields').item.json.timestamp }}",
+            "Subject": "={{ $json.subject }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Customer Name",
+              "displayName": "Customer Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Customer Email",
+              "displayName": "Customer Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Issue Summary",
+              "displayName": "Issue Summary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Priority",
+              "displayName": "Priority",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Low",
+                  "value": "Low"
+                },
+                {
+                  "name": "Medium",
+                  "value": "Medium"
+                },
+                {
+                  "name": "High",
+                  "value": "High"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "AI Draft Reply",
+              "displayName": "AI Draft Reply",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Pending Review",
+                  "value": "Pending Review"
+                },
+                {
+                  "name": "Approved",
+                  "value": "Approved"
+                },
+                {
+                  "name": "Sent",
+                  "value": "Sent"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        16
+      ],
+      "id": "62bb5a3d-9f24-47a8-b07d-d5c12f8b3eb4",
+      "name": "create ticket",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "YOUR_AIRTABLE_TOKEN",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "2bce7a34-b3b6-412a-8163-47f08f8212a8",
+              "leftValue": "={{ $json.fields.Priority }}",
+              "rightValue": "High",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1104,
+        16
+      ],
+      "id": "7a991c30-2452-4765-a320-74cd3e424508",
+      "name": "confidence check"
+    },
+    {
+      "parameters": {
+        "formTitle": "Review AI Draft Reply",
+        "formDescription": "Review and approve or edit the AI drafted reply before sending",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Airtable Record ID",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Your Reply (leave blank to approve)",
+              "fieldType": "textarea"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        -144,
+        336
+      ],
+      "id": "d1ef66d9-6571-4b15-915a-a7a5d10eb11c",
+      "name": "review form",
+      "webhookId": "YOUR_WEBHOOK_ID"
+    },
+    {
+      "parameters": {
+        "jsCode": "const formData = $('review form').first().json;\nconst ticketData = $('get ticket').first().json;\n\nconst humanEdit = formData['Your Reply (leave blank to approve)'] || '';\nconst aiDraft = ticketData.fields['AI Draft Reply'] || '';\nconst customerEmail = ticketData.fields['Customer Email'] || '';\nconst subject = ticketData.fields['Subject'] || '';\nconst recordId = formData['Airtable Record ID'];\n\nconst finalReply = humanEdit.trim() !== ''\n  ? humanEdit.trim()\n  : aiDraft.trim();\n\nreturn [{ json: {\n  finalReply: finalReply,\n  customerEmail: customerEmail,\n  subject: subject,\n  recordId: recordId,\n  wasEdited: humanEdit.trim() !== ''\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        304,
+        336
+      ],
+      "id": "9075638d-885e-4f37-ba24-cfb9ce9e53d0",
+      "name": "process form"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.customerEmail }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.finalReply }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        528,
+        336
+      ],
+      "id": "2a504c28-ad41-45cd-9f97-e5bb211d4afd",
+      "name": "send approved reply",
+      "webhookId": "YOUR_WEBHOOK_ID",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_GMAIL_ID",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "YOUR_SLACK_CHANNEL_ID",
+          "mode": "list",
+          "cachedResultName": "all-email-support-system"
+        },
+        "text": "=🚨 *High Priority Ticket — Review Required*\n\n*Customer:* {{ $('parse response').item.json.customerName }}\n*Email:* {{ $('parse response').item.json.customerEmail }}\n*Issue:* {{ $('parse response').item.json.issue_summary }}\n\n*AI Draft Reply:*\n{{ $('parse response').item.json.draft_reply }}\n\n*Airtable Record ID:*\n{{ $('create ticket').item.json.id }}\n\n👉 Review here: https://YOUR-N8N-DOMAIN.com/form-test/YOUR_WEBHOOK_ID",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.5,
+      "position": [
+        1328,
+        -80
+      ],
+      "id": "eee3842e-0d3a-47aa-a6e0-8c73dcfdebf0",
+      "name": "slack alert",
+      "webhookId": "YOUR_WEBHOOK_ID",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "YOUR_SLACK_ID",
+          "name": "Slack OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('parse response').item.json.customerEmail }}",
+        "subject": "=Re: {{ $('parse response').item.json.subject }}",
+        "emailType": "text",
+        "message": "={{ $('parse response').item.json.draft_reply }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1328,
+        112
+      ],
+      "id": "27ec998d-422f-43eb-89c6-0d3a8c8d90a5",
+      "name": "auto send",
+      "webhookId": "YOUR_WEBHOOK_ID4",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "YOUR_GMAIL_ID",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "YOUR_AIRTABLE_BASE_ID",
+          "mode": "list",
+          "cachedResultName": "Email Support System",
+          "cachedResultUrl": "https://airtable.com/YOUR_AIRTABLE_BASE_ID"
+        },
+        "table": {
+          "__rl": true,
+          "value": "YOUR_AIRTABLE_TABLE_ID",
+          "mode": "list",
+          "cachedResultName": "Tickets",
+          "cachedResultUrl": "https://airtable.com/YOUR_AIRTABLE_BASE_ID/YOUR_AIRTABLE_TABLE_ID"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Status": "Sent",
+            "Customer Name": "={{ $('create ticket').item.json.fields['Customer Name'] }}",
+            "Customer Email": "={{ $('create ticket').item.json.fields['Customer Email'] }}",
+            "Issue Summary": "={{ $('create ticket').item.json.fields['Issue Summary'] }}",
+            "Priority": "={{ $('create ticket').item.json.fields.Priority }}",
+            "AI Draft Reply": "={{ $('create ticket').item.json.fields['AI Draft Reply'] }}",
+            "id": "={{ $('create ticket').item.json.id }}",
+            "Timestamp": "={{ $('confidence check').item.json.createdTime }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Customer Name",
+              "displayName": "Customer Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Customer Email",
+              "displayName": "Customer Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Issue Summary",
+              "displayName": "Issue Summary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Priority",
+              "displayName": "Priority",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Low",
+                  "value": "Low"
+                },
+                {
+                  "name": "Medium",
+                  "value": "Medium"
+                },
+                {
+                  "name": "High",
+                  "value": "High"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "AI Draft Reply",
+              "displayName": "AI Draft Reply",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Pending Review",
+                  "value": "Pending Review"
+                },
+                {
+                  "name": "Approved",
+                  "value": "Approved"
+                },
+                {
+                  "name": "Sent",
+                  "value": "Sent"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1552,
+        112
+      ],
+      "id": "efb360c5-c41e-4431-81ca-4813b561b678",
+      "name": "update ticket status1",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "YOUR_AIRTABLE_TOKEN",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "YOUR_AIRTABLE_BASE_ID",
+          "mode": "list",
+          "cachedResultName": "Email Support System",
+          "cachedResultUrl": "https://airtable.com/YOUR_AIRTABLE_BASE_ID"
+        },
+        "table": {
+          "__rl": true,
+          "value": "YOUR_AIRTABLE_TABLE_ID",
+          "mode": "list",
+          "cachedResultName": "Tickets",
+          "cachedResultUrl": "https://airtable.com/YOUR_AIRTABLE_BASE_ID/YOUR_AIRTABLE_TABLE_ID"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Status": "Sent"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Customer Name",
+              "displayName": "Customer Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Customer Email",
+              "displayName": "Customer Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Issue Summary",
+              "displayName": "Issue Summary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Priority",
+              "displayName": "Priority",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Low",
+                  "value": "Low"
+                },
+                {
+                  "name": "Medium",
+                  "value": "Medium"
+                },
+                {
+                  "name": "High",
+                  "value": "High"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "AI Draft Reply",
+              "displayName": "AI Draft Reply",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Pending Review",
+                  "value": "Pending Review"
+                },
+                {
+                  "name": "Approved",
+                  "value": "Approved"
+                },
+                {
+                  "name": "Sent",
+                  "value": "Sent"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        752,
+        336
+      ],
+      "id": "9e2cf23b-9da2-4373-9c77-8ae976b1d7f6",
+      "name": "update ticket status2",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "YOUR_AIRTABLE_TOKEN",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "base": {
+          "__rl": true,
+          "value": "YOUR_AIRTABLE_BASE_ID",
+          "mode": "list",
+          "cachedResultName": "Email Support System",
+          "cachedResultUrl": "https://airtable.com/YOUR_AIRTABLE_BASE_ID"
+        },
+        "table": {
+          "__rl": true,
+          "value": "YOUR_AIRTABLE_TABLE_ID",
+          "mode": "list",
+          "cachedResultName": "Tickets",
+          "cachedResultUrl": "https://airtable.com/YOUR_AIRTABLE_BASE_ID/YOUR_AIRTABLE_TABLE_ID"
+        },
+        "id": "={{ $json['Airtable Record ID'] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        80,
+        336
+      ],
+      "id": "fb036254-eb74-4004-828a-1e5363854a00",
+      "name": "get ticket",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "YOUR_AIRTABLE_TOKEN",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "76ec2453-a796-4229-8984-e864bf1ade03",
+              "name": "customerName",
+              "value": "={{ $json.from.value[0].name }}",
+              "type": "string"
+            },
+            {
+              "id": "794b0979-dcf4-4603-9048-37a40e9ead24",
+              "name": "customerEmail",
+              "value": "={{ $json.from.value[0].address }}",
+              "type": "string"
+            },
+            {
+              "id": "4c169aa2-3315-4c10-beb7-a27a00552b28",
+              "name": "Subject",
+              "value": "={{ $json.subject.replace('Subject: ', '') }}",
+              "type": "string"
+            },
+            {
+              "id": "70869015-d319-4013-9d44-9addfbb27aa2",
+              "name": "messageBody",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            },
+            {
+              "id": "499ff835-db69-463c-ab2c-66f37422ab37",
+              "name": "timestamp",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        80,
+        16
+      ],
+      "id": "1ae87d5c-3f8b-4b49-a0a3-0a077417cb37",
+      "name": "extract fields"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Always base you answer here!",
+        "operation": "get",
+        "documentURL": "YOUR_KNOWLEDGE_BASE_URL"
+      },
+      "type": "n8n-nodes-base.googleDocsTool",
+      "typeVersion": 2,
+      "position": [
+        464,
+        128
+      ],
+      "id": "caf53648-acfa-4962-9d5c-2b8cf9b26e67",
+      "name": "Business Knowledge Base",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "YOUR_GOOGLE_DOCS_CREDENTIAL",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        288,
+        128
+      ],
+      "id": "ba324e4d-569b-4d95-b654-74cbba6fa2e9",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "YOUR_GOOGLE_GEMINI_CREDENTIALS",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "extract fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "parse response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "parse response": {
+      "main": [
+        [
+          {
+            "node": "create ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create ticket": {
+      "main": [
+        [
+          {
+            "node": "confidence check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "confidence check": {
+      "main": [
+        [
+          {
+            "node": "slack alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "auto send",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "review form": {
+      "main": [
+        [
+          {
+            "node": "get ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "process form": {
+      "main": [
+        [
+          {
+            "node": "send approved reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "send approved reply": {
+      "main": [
+        [
+          {
+            "node": "update ticket status2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "slack alert": {
+      "main": [
+        []
+      ]
+    },
+    "auto send": {
+      "main": [
+        [
+          {
+            "node": "update ticket status1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get ticket": {
+      "main": [
+        [
+          {
+            "node": "process form",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "extract fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Business Knowledge Base": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "e96b06b1-249c-4d7a-baed-72902322c6b1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "YOUR_INSTANCE_ID"
+  },
+  "nodeGroups": [],
+  "id": "YMMeNWqsliCX9Uvy",
+  "tags": []
+}
