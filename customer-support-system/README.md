@@ -1,4 +1,4 @@
-# AI Customer Support Automation
+# Customer Support Automation
 
 An AI-powered customer support automation workflow built with **n8n**, **Google Gemini**, **Gmail**, **Airtable**, **Slack**, and **Google Docs**.
 
