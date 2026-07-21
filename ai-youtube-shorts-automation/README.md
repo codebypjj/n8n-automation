@@ -38,17 +38,17 @@ OpenAI Content Generation
       ▼
 Telegram Review
  ┌─────────────┐
- │             │
- ▼             ▼
-Approve      Reject
- │             │
- ▼             ▼
-YouTube      Move File
-Upload       to Rejected Folder
- │             │
- ▼             ▼
-Log Data    Log Data
-to Sheets   to Sheets
+ │               │
+ ▼              ▼
+Approve        Reject
+ │               │
+ ▼              ▼
+YouTube       Move File
+Upload        to Rejected Folder
+ │               │
+ ▼              ▼
+Log Data      Log Data
+to Sheets     to Sheets
 ```
 
 ## Technologies Used
